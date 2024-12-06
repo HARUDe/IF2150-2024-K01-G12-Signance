@@ -7,11 +7,18 @@ Perangkat lunak Signance adalah sebuah aplikasi pengelola keuangan pribadi. Peng
 
 ## Installing / Getting started
 
-Ikuti Langkah ini untuk nge-run aplikasi
-
-1. pip install PyQt5 di terminal
-2. copy and paste "python src/main.py" ke terminal
-
+1. Clone the github repo
+```sh
+git clone https://github.com/HARUDe/IF2150-2024-K01-G12-Signance.git
+```
+3. Install PyQT in terminal
+```sh
+pip install PyQt5
+```
+5. Run this code 
+```sh
+python src/main.py
+```
 
 ## Modul
 
@@ -39,31 +46,32 @@ Ikuti Langkah ini untuk nge-run aplikasi
 ## Tujuan masing-masing directory di dalam src
 
 1. src/views/ - Semua implementasi UI PyQt :
-- main_window.py - Jendela utama aplikasi.
-- /pages/ - Implementasi layar individu (login, dashboard, dll.).
-- /components/ - Widget PyQt yang dapat digunakan kembali dan elemen UI. 
+    - main_window.py - Jendela utama aplikasi.
+    - /pages/ - Implementasi layar individu (login, dashboard, dll.).
+    - /components/ - Widget PyQt yang dapat digunakan kembali dan elemen UI. 
     
 2. src/models/ - Struktur data dan objek bisnis :
-- Mendefinisikan kelas-kelas yang merepresentasikan data Anda (User, Transaction, dll.).
-- Tidak ada kode UI di sini.
+    - Mendefinisikan kelas-kelas yang merepresentasikan data Anda (User Transaction, dll.).
+    - Tidak ada kode UI di sini.
 
 3. src/controllers/ - Logika bisnis :
-- Mengelola interaksi antara views dan models.
-- Berisi logika aplikasi.
-- Tidak ada kode UI di sini.
+    - Mengelola interaksi antara views dan models.
+    - Berisi logika aplikasi.
+    - Tidak ada kode UI di sini.
 
 4. src/database/ - Operasi basis data :
-- Koneksi dan inisialisasi basis data.
-- Kueri SQL.
-- Tidak ada kode UI di sini.
+    - Koneksi dan inisialisasi basis data.
+    - Kueri SQL.
+    - Tidak ada kode UI di sini.
 
 5. src/utils/ - Fungsi pembantu :
-- Utilitas umum.
-- Fungsi pembantu.
-- Tidak ada kode UI di sini.
+    - Utilitas umum.
+    - Fungsi pembantu.
+    - Tidak ada kode UI di sini.
 
+## Struktur 
 ### Struktur khusus bagian UI :
-
+```
 src/
 └── views/
     ├── main_window.py          # Main window 
@@ -76,8 +84,10 @@ src/
         ├── transaction_page.py # Transaction management
         ├── budget_page.py     # Budget management
         └── saving_page.py     # Savings management
-
+```
 ### Struktur Repository secara keseluruhan
+
+```
 .
 ├── README.md
 ├── requirements.txt
@@ -121,3 +131,4 @@ src/
     ├── test_models/
     ├── test_controllers/
     └── test_views/
+```
