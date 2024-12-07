@@ -1,13 +1,13 @@
 import sys
 from PyQt5.QtWidgets import QApplication
 from views.main_window import MainWindow
-#from database.database import initialize_database (kalau udah bikin database, uncomment ini)
+from database.database import initialize_database 
 
 def main():
     # Initialize database
-    #initialize_database() (kalau udah bikin database, uncomment ini)
+    initialize_database() 
     
-    # Inisialisasi aplikasi
+    # Inisialisasi aplikasich
     app = QApplication(sys.argv)
     
     # Menginisialisasi dan menampilkan main window
