@@ -1,9 +1,9 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout
 
-class BudgetPage(QWidget):
+class RegisterPage(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Budget")
+        self.setWindowTitle("Register")
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Budget Coming Soon"))
+        layout.addWidget(QLabel("Register Coming Soon"))
         self.setLayout(layout)

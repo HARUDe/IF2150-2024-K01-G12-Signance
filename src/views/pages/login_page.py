@@ -2,11 +2,14 @@
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, 
                            QLabel, QLineEdit, QPushButton, QMessageBox)
 from PyQt5.QtCore import Qt
+from PyQt5.QtCore import pyqtSignal
 
 class LoginPage(QWidget):
-    def __init__(self, main_window):
+    # Signal emitted when login is successful
+    login_successful = pyqtSignal()
+
+    def __init__(self):
         super().__init__()
-        self.main_window = main_window
         self.init_ui()
         
     def init_ui(self):
@@ -54,21 +57,6 @@ class LoginPage(QWidget):
         login_button.clicked.connect(self.handle_login)
         form_layout.addWidget(login_button)
         
-        # Register link
-        register_button = QPushButton("Don't have an account? Register")
-        register_button.setStyleSheet("""
-            QPushButton {
-                border: none;
-                color: blue;
-                text-align: center;
-            }
-            QPushButton:hover {
-                text-decoration: underline;
-            }
-        """)
-        register_button.clicked.connect(self.show_register)
-        form_layout.addWidget(register_button)
-        
         # Add form to main layout
         layout.addLayout(form_layout)
         self.setLayout(layout)
@@ -79,10 +67,6 @@ class LoginPage(QWidget):
         
         # Kalau sudah ada database, bisa cek username dan password di sini
         if username and password:
-            self.main_window.show_dashboard()
+            self.login_successful.emit()
         else:
             QMessageBox.warning(self, "Error", "Please fill in all fields")
-    
-    def show_register(self):
-        # Kalau sudah ada register page, bisa dipanggil di sini
-        QMessageBox.information(self, "Register", "Registration page coming soon!")

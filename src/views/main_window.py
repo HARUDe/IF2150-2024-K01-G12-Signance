@@ -1,31 +1,113 @@
 # src/views/main_window.py
-from PyQt5.QtWidgets import QMainWindow, QStackedWidget
+from PyQt5.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget
+)
+
 from .pages.login_page import LoginPage
+from .pages.register_page import RegisterPage
 from .pages.dashboard_page import DashboardPage
+from .pages.transaction_page import TransactionPage
+from .pages.saving_page import SavingPage
+from .pages.budget_page import BudgetPage
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Signance - Financial Manager")
         self.setGeometry(100, 100, 1200, 800)
+        self.logged_in = False
         
-        # Create stacked widget for multiple pages
-        self.stacked_widget = QStackedWidget()
-        self.setCentralWidget(self.stacked_widget)
-        
-        # Initialize pages
-        self.login_page = LoginPage(self)
-        self.dashboard_page = DashboardPage(self)
-        
-        # Add pages to stacked widget
-        self.stacked_widget.addWidget(self.login_page)
-        self.stacked_widget.addWidget(self.dashboard_page)
-        
-        # Start with login page
-        self.show_login_page()
+        # Main widget and layout
+        main_widget = QWidget()
+        main_layout = QHBoxLayout()
+        main_widget.setLayout(main_layout)
+        self.setCentralWidget(main_widget)
+
+        # Sidebar
+        self.sidebar = QVBoxLayout()
+        self.sidebar.setContentsMargins(0, 0, 0, 0)
+        self.sidebar.setSpacing(10)
+
+        # Pages
+        self.pages = {
+            "Dashboard": DashboardPage(),
+            "Transactions": TransactionPage(),
+            "Savings": SavingPage(),
+            "Budget": BudgetPage(),
+            "Login": LoginPage(),
+            "Register": RegisterPage()  # Replace with your register page
+        }
+
+        # Connect LoginPage signal
+        login_page = self.pages["Login"]
+        login_page.login_successful.connect(self.on_login_successful)
+
+        # Content area
+        self.content_area = QStackedWidget()
+
+        # Add all pages to the content area initially
+        for page_widget in self.pages.values():
+            self.content_area.addWidget(page_widget)
+
+        # Add sidebar and content area to the main layout
+        sidebar_widget = QWidget()
+        sidebar_widget.setLayout(self.sidebar)
+        sidebar_widget.setFixedWidth(200)
+
+        main_layout.addWidget(sidebar_widget)
+        main_layout.addWidget(self.content_area)
+
+        # Set the initial page
+        self.update_sidebar()
+        self.switch_page("Login")
+
+    def update_sidebar(self):
+        """Update sidebar buttons based on login state."""
+        # Clear the existing sidebar
+        while self.sidebar.count():
+            item = self.sidebar.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+
+        # Choose pages based on login state
+        pages = (
+            ["Dashboard", "Transactions", "Savings", "Budget"]
+            if self.logged_in
+            else ["Login", "Register"]
+        )
+
+        # Create buttons for each page
+        for page_name in pages:
+            btn = QPushButton(page_name)
+            btn.clicked.connect(lambda checked, name=page_name: self.switch_page(name))
+            self.sidebar.addWidget(btn)
+
+        self.sidebar.addStretch()
+
+        # Add logout button for logged-in state
+        if self.logged_in:
+            self.sidebar.addStretch()
+            logout_btn = QPushButton("Logout")
+            logout_btn.clicked.connect(self.logout)
+            self.sidebar.addWidget(logout_btn)
+
+    def switch_page(self, page_name):
+        page_widget = self.pages[page_name]
+        self.content_area.setCurrentWidget(page_widget)
+
+    def logout(self):
+        """Handle logout action."""
+        self.logged_in = False
+        self.update_sidebar()
+        self.switch_page("Login")
+
+    def on_login_successful(self):
+        """Handle successful login."""
+        self.logged_in = True
+        self.update_sidebar()
+        self.switch_page("Dashboard")  # Go to the dashboard page
     
-    def show_login_page(self):
-        self.stacked_widget.setCurrentWidget(self.login_page)
-    
-    def show_dashboard(self):
-        self.stacked_widget.setCurrentWidget(self.dashboard_page)
+
+
