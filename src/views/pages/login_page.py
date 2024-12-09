@@ -1,4 +1,5 @@
 # src/views/pages/login_page.py
+
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, 
                            QLabel, QLineEdit, QPushButton, QMessageBox)
 from PyQt5.QtCore import Qt
@@ -31,10 +32,10 @@ class LoginPage(QWidget):
         form_layout.setSpacing(10)
         
         # Username input
-        self.username_input = QLineEdit()
-        self.username_input.setPlaceholderText("Username")
-        self.username_input.setStyleSheet("padding: 8px;")
-        form_layout.addWidget(self.username_input)
+        self.username_or_email_input = QLineEdit()
+        self.username_or_email_input.setPlaceholderText("Username/Email")
+        self.username_or_email_input.setStyleSheet("padding: 8px;")
+        form_layout.addWidget(self.username_or_email_input)
         
         # Password input
         self.password_input = QLineEdit()
@@ -65,10 +66,10 @@ class LoginPage(QWidget):
         self.setLayout(layout)
     
     def handle_login(self):
-        username = self.username_input.text()
+        username_email = self.username_or_email_input.text()
         password = self.password_input.text()
         
-        if self.user_controller.login(username, password):
-            self.main_window.show_dashboard()
+        if self.user_controller.login(username_email, password):
+            self.login_successful.emit()
         else:
-            QMessageBox.warning(self, "Error", "Invalid username or password")
+            QMessageBox.warning(self, "Error", "Invalid username_email or password")

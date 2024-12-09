@@ -1,15 +1,10 @@
 # src/views/main_window.py
+
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget
 )
 
-from .pages.login_page import LoginPage
-from .pages.register_page import RegisterPage
-from .pages.dashboard_page import DashboardPage
-from .pages.transaction_page import TransactionPage
-from .pages.saving_page import SavingPage
-from .pages.budget_page import BudgetPage
-
+from .pages import LoginPage, DashboardPage, TransactionPage, BudgetPage, SavingPage, RegisterPage
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -35,7 +30,7 @@ class MainWindow(QMainWindow):
             "Transactions": TransactionPage(),
             "Savings": SavingPage(),
             "Budget": BudgetPage(),
-            "Login": LoginPage(),
+            "Login": LoginPage(self),
             "Register": RegisterPage()  # Replace with your register page
         }
 
