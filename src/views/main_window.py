@@ -1,7 +1,7 @@
 # src/views/main_window.py
 
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget, QSizePolicy
 )
 
 from .pages import LoginPage, DashboardPage, TransactionPage, BudgetPage, SavingPage, RegisterPage
@@ -46,16 +46,19 @@ class MainWindow(QMainWindow):
             self.content_area.addWidget(page_widget)
 
         # Add sidebar and content area to the main layout
-        sidebar_widget = QWidget()
-        sidebar_widget.setLayout(self.sidebar)
-        sidebar_widget.setFixedWidth(200)
+        self.sidebar_widget = QWidget()
+        self.sidebar_widget.setLayout(self.sidebar)
+        self.sidebar_widget.setFixedWidth(200)
 
-        main_layout.addWidget(sidebar_widget)
+        main_layout.addWidget(self.sidebar_widget)
         main_layout.addWidget(self.content_area)
 
         # Set the initial page
         self.update_sidebar()
         self.switch_page("Login")
+
+        # Make content area expand to fill available space
+        self.content_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
     def update_sidebar(self):
         """Update sidebar buttons based on login state."""
@@ -70,7 +73,7 @@ class MainWindow(QMainWindow):
         pages = (
             ["Dashboard", "Transactions", "Savings", "Budget"]
             if self.logged_in
-            else ["Login", "Register"]
+            else []
         )
 
         # Create buttons for each page
@@ -91,6 +94,11 @@ class MainWindow(QMainWindow):
     def switch_page(self, page_name):
         page_widget = self.pages[page_name]
         self.content_area.setCurrentWidget(page_widget)
+        # Show or hide the sidebar based on the current page
+        if page_name in ["Login", "Register"]:
+            self.sidebar_widget.hide()
+        else:
+            self.sidebar_widget.show()
 
     def logout(self):
         """Handle logout action."""
@@ -103,6 +111,3 @@ class MainWindow(QMainWindow):
         self.logged_in = True
         self.update_sidebar()
         self.switch_page("Dashboard")  # Go to the dashboard page
-    
-
-
