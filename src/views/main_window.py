@@ -7,9 +7,14 @@ from .pages.login_page import LoginPage
 from .pages.register_page import RegisterPage
 from .pages.dashboard_page import DashboardPage
 from .pages.transaction_page import TransactionPage
-from .pages.saving_page import SavingPage
+from .pages.saving_page import SavingsPage
 from .pages.budget_page import BudgetPage
+from controllers import BudgetController, UserController
 
+budget_controller = BudgetController()
+# saving_controller = SavingsController() 
+# transaction_controller = TransactionController() 
+user_controller = UserController()
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -17,6 +22,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Signance - Financial Manager")
         self.setGeometry(100, 100, 1200, 800)
         self.logged_in = False
+        self.user_id = None
         
         # Main widget and layout
         main_widget = QWidget()
@@ -31,10 +37,10 @@ class MainWindow(QMainWindow):
 
         # Pages
         self.pages = {
-            "Dashboard": DashboardPage(),
-            "Transactions": TransactionPage(),
-            "Savings": SavingPage(),
-            "Budget": BudgetPage(),
+            "Dashboard": DashboardPage(user_controller=user_controller, transaction_controller=transaction_controller, switch_to_savings_page=lambda: self.switch_page("Savings")),
+            "Transactions": TransactionPage(self.user_id, transaction_controller),
+            "Savings": SavingsPage(self.user_id, saving_controller),
+            "Budget": BudgetPage(controller=budget_controller,user_id=self.user_id),
             "Login": LoginPage(),
             "Register": RegisterPage()  # Replace with your register page
         }
@@ -95,6 +101,8 @@ class MainWindow(QMainWindow):
 
     def switch_page(self, page_name):
         page_widget = self.pages[page_name]
+        if page_name == "Dashboard":
+            page_widget.update_dashboard()
         self.content_area.setCurrentWidget(page_widget)
 
     def logout(self):
@@ -106,6 +114,7 @@ class MainWindow(QMainWindow):
     def on_login_successful(self):
         """Handle successful login."""
         self.logged_in = True
+        self.user_id = 1
         self.update_sidebar()
         self.switch_page("Dashboard")  # Go to the dashboard page
     
