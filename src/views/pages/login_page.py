@@ -3,13 +3,16 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
                            QLabel, QLineEdit, QPushButton, QMessageBox)
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal
+from controllers.user_controller import UserController
 
 class LoginPage(QWidget):
     # Signal emitted when login is successful
     login_successful = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, main_window):
         super().__init__()
+        self.main_window = main_window
+        self.user_controller = UserController()
         self.init_ui()
         
     def init_ui(self):
@@ -65,8 +68,7 @@ class LoginPage(QWidget):
         username = self.username_input.text()
         password = self.password_input.text()
         
-        # Kalau sudah ada database, bisa cek username dan password di sini
-        if username and password:
-            self.login_successful.emit()
+        if self.user_controller.login(username, password):
+            self.main_window.show_dashboard()
         else:
-            QMessageBox.warning(self, "Error", "Please fill in all fields")
+            QMessageBox.warning(self, "Error", "Invalid username or password")
