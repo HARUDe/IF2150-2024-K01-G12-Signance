@@ -22,3 +22,16 @@ class UserController:
             conn.close()
         return None
        
+    def register(self, username, email, password):
+        conn = get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)", (username, email, password))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
+            cur.close()
+            conn.close()
+        return False

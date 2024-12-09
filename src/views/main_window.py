@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
             "Savings": SavingPage(),
             "Budget": BudgetPage(),
             "Login": LoginPage(self),
-            "Register": RegisterPage()  # Replace with your register page
+            "Register": RegisterPage(self)  # Replace with your register page
         }
 
         # Connect LoginPage signal
