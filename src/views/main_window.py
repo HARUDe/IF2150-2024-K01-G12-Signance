@@ -4,11 +4,11 @@ from PyQt5.QtWidgets import (
 )
 
 from .pages import LoginPage, RegisterPage, DashboardPage, TransactionPage, SavingsPage, BudgetPage
-from controllers import SavingsController
+from controllers import TransactionController
 
 # budget_controller = BudgetController()
-saving_controller = SavingsController() 
-# transaction_controller = TransactionController() 
+# saving_controller = SavingsController() 
+transaction_controller = TransactionController() 
 # user_controller = UserController()
 
 class MainWindow(QMainWindow):
@@ -33,8 +33,8 @@ class MainWindow(QMainWindow):
         # Pages
         self.pages = {
             "Dashboard": DashboardPage(),
-            "Transactions": TransactionPage(),
-            "Savings": SavingsPage(self.user_id, saving_controller),
+            "Transactions": TransactionPage(self.user_id, transaction_controller),
+            "Savings": SavingsPage(),
             "Budget": BudgetPage(),
             "Login": LoginPage(),
             "Register": RegisterPage()  # Replace with your register page
