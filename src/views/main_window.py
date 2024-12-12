@@ -3,8 +3,13 @@
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget, QSizePolicy
 )
-
 from .pages import LoginPage, DashboardPage, TransactionPage, BudgetPage, SavingPage, RegisterPage
+from controllers import BudgetController, UserController
+
+budget_controller = BudgetController()
+user_controller = UserController()
+# saving_controller = SavingsController() 
+# transaction_controller = TransactionController() 
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -12,6 +17,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Signance - Financial Manager")
         self.setGeometry(100, 100, 1200, 800)
         self.logged_in = False
+        self.user_id = None
         
         # Main widget and layout
         main_widget = QWidget()
@@ -26,12 +32,12 @@ class MainWindow(QMainWindow):
 
         # Pages
         self.pages = {
-            "Dashboard": DashboardPage(),
-            "Transactions": TransactionPage(),
-            "Savings": SavingPage(),
-            "Budget": BudgetPage(),
+            "Dashboard": DashboardPage(user_controller=user_controller, transaction_controller=transaction_controller, switch_to_savings_page=lambda: self.switch_page("Savings")),
+            "Transactions": TransactionPage(self.user_id, transaction_controller),
+            "Savings": SavingsPage(self.user_id, saving_controller),
+            "Budget": BudgetPage(controller=budget_controller,user_id=self.user_id),
             "Login": LoginPage(self),
-            "Register": RegisterPage(self)  # Replace with your register page
+            "Register": RegisterPage(self) 
         }
 
         # Connect LoginPage signal
@@ -93,6 +99,8 @@ class MainWindow(QMainWindow):
 
     def switch_page(self, page_name):
         page_widget = self.pages[page_name]
+        if page_name == "Dashboard":
+            page_widget.update_dashboard()
         self.content_area.setCurrentWidget(page_widget)
         # Show or hide the sidebar based on the current page
         if page_name in ["Login", "Register"]:
@@ -109,5 +117,6 @@ class MainWindow(QMainWindow):
     def on_login_successful(self):
         """Handle successful login."""
         self.logged_in = True
+        self.user_id = 1
         self.update_sidebar()
         self.switch_page("Dashboard")  # Go to the dashboard page
