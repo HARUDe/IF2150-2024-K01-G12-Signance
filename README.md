@@ -11,9 +11,14 @@ Perangkat lunak Signance adalah sebuah aplikasi pengelola keuangan pribadi. Peng
 ```sh
 git clone https://github.com/HARUDe/IF2150-2024-K01-G12-Signance.git
 ```
-3. Install PyQT in terminal
+3. Install SQLAlchemy and PyQT in terminal
 ```sh
-pip install PyQt5
+pip install SQLAlchemy PyQt5
+```
+or 
+
+```sh
+pip install -r requirements.txt
 ```
 5. Run this code 
 ```sh
@@ -51,7 +56,7 @@ python src/main.py
     - /components/ - Widget PyQt yang dapat digunakan kembali dan elemen UI. 
     
 2. src/models/ - Struktur data dan objek bisnis :
-    - Mendefinisikan kelas-kelas yang merepresentasikan data Anda (User Transaction, dll.).
+    - Mendefinisikan kelas-kelas yang merepresentasikan data (User Transaction, dll.).
     - Tidak ada kode UI di sini.
 
 3. src/controllers/ - Logika bisnis :
