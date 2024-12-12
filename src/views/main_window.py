@@ -32,12 +32,13 @@ class MainWindow(QMainWindow):
 
         # Pages
         self.pages = {
-            "Dashboard": DashboardPage(user_controller=user_controller, transaction_controller=transaction_controller, switch_to_savings_page=lambda: self.switch_page("Savings")),
-            "Transactions": TransactionPage(self.user_id, transaction_controller),
-            "Savings": SavingsPage(self.user_id, saving_controller),
-            "Budget": BudgetPage(controller=budget_controller,user_id=self.user_id),
+            "Dashboard": DashboardPage(),
+            "Transactions": TransactionPage(),
+            "Savings": SavingPage(),
+            "Budget": BudgetPage(),
+
             "Login": LoginPage(self),
-            "Register": RegisterPage(self) 
+            "Register": RegisterPage(self)
         }
 
         # Connect LoginPage signal
