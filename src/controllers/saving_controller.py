@@ -1,40 +1,140 @@
 from datetime import datetime
 from decimal import Decimal
 from models.saving import SavingGoal
+from database.database import get_connection
 
 class SavingsController:
     def __init__(self):
-        self.savings = []
-        self.next_id = 1
+        pass  # Initialization no longer pre-fetches data
 
     def create_saving(self, user_id, name, target_amount, deadline):
-        saving = SavingGoal(user_id, name, target_amount, deadline, saving_id=self.next_id)
-        self.savings.append(saving)
-        self.next_id += 1
-        return saving
+        conn = get_connection()
+        cur = conn.cursor()
+        try:
+            # langsung masukin ke database
+            cur.execute(
+                """
+                INSERT INTO savings (user_id, name, target_amount, current_amount, deadline, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                RETURNING saving_id
+                """,
+                (user_id, name, str(target_amount), "0", deadline, datetime.now())
+            )
+            saving_id = cur.fetchone()[0]
+            conn.commit()
+            return SavingGoal(saving_id, user_id, name, target_amount, 0, deadline, datetime.now())
+        except Exception as e:
+            print(f"Error creating saving: {str(e)}")
+            conn.rollback()
+        finally:
+            cur.close()
+            conn.close()
 
     def update_saving(self, saving_id, name=None, target_amount=None, deadline=None):
-        saving = self.get_saving_by_id(saving_id)
-        if saving:
+        """Update a saving goal in the database."""
+        conn = get_connection()
+        cur = conn.cursor()
+        try:
+            updates = []
+            params = []
             if name:
-                saving.name = name
+                updates.append("name = ?")
+                params.append(name)
             if target_amount:
-                saving.target_amount = target_amount
+                updates.append("target_amount = ?")
+                params.append(str(target_amount))
             if deadline:
-                saving.deadline = deadline
-            return saving
-        return None
+                updates.append("deadline = ?")
+                params.append(deadline)
+            if not updates:
+                return None  # no updates
+
+            params.append(saving_id)
+            query = f"UPDATE savings SET {', '.join(updates)} WHERE saving_id = ?"
+            cur.execute(query, tuple(params))
+            conn.commit()
+            # Fetch the updated saving
+            return self.get_saving_by_id(saving_id)
+        except Exception as e:
+            print(f"Error updating saving: {str(e)}")
+            conn.rollback()
+        finally:
+            cur.close()
+            conn.close()
 
     def delete_saving(self, saving_id):
-        saving = self.get_saving_by_id(saving_id)
-        if saving:
-            self.savings.remove(saving)
+        """Delete a saving goal from the database."""
+        conn = get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("DELETE FROM savings WHERE saving_id = ?", (saving_id,))
+            conn.commit()
+        except Exception as e:
+            print(f"Error deleting saving: {str(e)}")
+            conn.rollback()
+        finally:
+            cur.close()
+            conn.close()
 
     def get_saving_by_id(self, saving_id):
-        for saving in self.savings:
-            if saving.saving_id == saving_id:
-                return saving
-        return None
+        """Fetch a single saving goal by its ID."""
+        conn = get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute(
+                """
+                SELECT saving_id, user_id, name, target_amount, current_amount, deadline, created_at
+                FROM savings
+                WHERE saving_id = ?
+                """,
+                (saving_id,)
+            )
+            row = cur.fetchone()
+            if row:
+                return SavingGoal(
+                    saving_id=row[0],
+                    user_id=row[1],
+                    name=row[2],
+                    target_amount=Decimal(row[3]),
+                    current_amount=Decimal(row[4]),
+                    deadline=row[5],
+                    created_at=row[6]
+                )
+            return None
+        except Exception as e:
+            print(f"Error fetching saving by ID: {str(e)}")
+        finally:
+            cur.close()
+            conn.close()
 
-    def get_all_savings(self):
-        return self.savings
+    def get_all_savings(self, user_id):
+        """Fetch all savings for a specific user."""
+        conn = get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute(
+                """
+                SELECT saving_id, user_id, name, target_amount, current_amount, deadline, created_at
+                FROM savings
+                WHERE user_id = ?
+                """,
+                (user_id,)
+            )
+            rows = cur.fetchall()
+            return [
+                SavingGoal(
+                    saving_id=row[0],
+                    user_id=row[1],
+                    name=row[2],
+                    target_amount=Decimal(row[3]),
+                    current_amount=Decimal(row[4]),
+                    deadline=row[5],
+                    created_at=row[6]
+                )
+                for row in rows
+            ]
+        except Exception as e:
+            print(f"Error fetching all savings: {str(e)}")
+        finally:
+            cur.close()
+            conn.close()

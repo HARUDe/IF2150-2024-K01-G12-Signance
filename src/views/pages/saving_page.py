@@ -50,7 +50,7 @@ class SavingsPage(QWidget):
 
     def refresh_savings_list(self):
         self.list_widget.clear()
-        savings_goals = self.controller.get_all_savings()
+        savings_goals = self.controller.get_all_savings(self.user_id)
         for goal in savings_goals:
             self.list_widget.addItem(f"{goal.name} - {goal.current_amount}/{goal.target_amount}")
 
@@ -70,7 +70,7 @@ class SavingsPage(QWidget):
     def get_selected_savings_id(self):
         current_row = self.list_widget.currentRow()
         if current_row != -1:
-            return self.controller.get_all_savings()[current_row].saving_id
+            return self.controller.get_all_savings(self.user_id)[current_row].saving_id
         return None
         
 
@@ -90,7 +90,9 @@ class SavingsForm(QDialog):
         form_layout = QFormLayout()
         self.name_input = QLineEdit(goal.name if goal else "")
         self.target_input = QLineEdit(str(goal.target_amount) if goal else "")
-        self.deadline_input = QDateEdit(goal.deadline if goal else QDate.currentDate())
+        self.deadline_input = QDateEdit(
+            QDate(*map(int, goal.deadline.split('-'))) if goal else QDate.currentDate()
+        )
         self.deadline_input.setCalendarPopup(True)
 
         form_layout.addRow("Name:", self.name_input)
