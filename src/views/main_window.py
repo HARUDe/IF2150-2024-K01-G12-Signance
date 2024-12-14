@@ -3,16 +3,13 @@
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget, QSizePolicy
 )
-from .pages import LoginPage, DashboardPage, TransactionPage, BudgetPage, SavingPage, RegisterPage
-from controllers import BudgetController, UserController
-
-from .pages import LoginPage, RegisterPage, DashboardPage, TransactionPage, SavingsPage, BudgetPage
-from controllers import TransactionController
+from .pages import LoginPage, DashboardPage, TransactionPage, BudgetPage, SavingsPage, RegisterPage
+from controllers import BudgetController, UserController, TransactionController, SavingsController
 
 budget_controller = BudgetController()
 saving_controller = SavingsController() 
 transaction_controller = TransactionController() 
-# user_controller = UserController()
+user_controller = UserController()
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -35,11 +32,10 @@ class MainWindow(QMainWindow):
 
         # Pages
         self.pages = {
-            "Dashboard": DashboardPage(),
+            "Dashboard": DashboardPage(user_controller, transaction_controller, lambda: self.switch_page("Savings")),
             "Transactions": TransactionPage(self.user_id, transaction_controller),
-            "Savings": SavingsPage(),
-            "Budget": BudgetPage(),
-
+            "Savings": SavingsPage(self.user_id, saving_controller),
+            "Budget": BudgetPage(self.user_id, budget_controller),
             "Login": LoginPage(self),
             "Register": RegisterPage(self)
         }
