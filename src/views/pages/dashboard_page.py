@@ -93,7 +93,6 @@ class LineChart(QWidget):
         self.plot_line_chart()
 
 
-# Budget Progress Bars for Categories
 class BudgetProgress(QWidget):
     def __init__(self, user_id, budget_controller, transaction_controller, parent=None):
         super().__init__(parent)
@@ -109,39 +108,41 @@ class BudgetProgress(QWidget):
 
     def get_category_progress(self):
         """Fetch the user's budget and current spending for each category"""
-        # Replace this with actual data fetching logic
         class_budget = self.budget_controller.get_all_budgets(self.user_id)
-        print(class_budget)
         
-        budgets = []
-        for budget in class_budget:
-            budgets.append(budget.amount)
-
-        # UNCOMMENT THIS FOR TESTING PURPOSES
-        # n = len(budgets)
-        # for i in range(6 - n):
-        #     budgets.append(100)
-
+        # Initialize default budget values
+        default_budget = 1000  # Default budget amount if none is set
         budget_data = {
-            'Food': budgets[0],
-            'Transport': budgets[1],
-            'Entertainment': budgets[2],
-            'Education': budgets[3],
-            'Others': budgets[4],
+            'Food': default_budget,
+            'Transport': default_budget,
+            'Entertainment': default_budget,
+            'Education': default_budget,
+            'Others': default_budget,
         }
 
+        # Update budget_data with actual values if they exist
+        for i, budget in enumerate(class_budget):
+            category = list(budget_data.keys())[i]
+            budget_data[category] = budget.amount
+
+        # Get spending data
         spending = self.transaction_controller.calculate_monthly_category_spending(self.user_id)
         spending_data = {
-            'Food': spending[0],
-            'Transport': spending[1],
-            'Entertainment': spending[2],
-            'Education': spending[3],
-            'Others': spending[4],
+            'Food': spending[0] if len(spending) > 0 else 0,
+            'Transport': spending[1] if len(spending) > 1 else 0,
+            'Entertainment': spending[2] if len(spending) > 2 else 0,
+            'Education': spending[3] if len(spending) > 3 else 0,
+            'Others': spending[4] if len(spending) > 4 else 0,
         }
-        progress = {
-            category: (spending_data[category] / budget_data[category]) * 100
-            for category in budget_data
-        }
+
+        # Calculate progress percentages safely
+        progress = {}
+        for category in budget_data:
+            if budget_data[category] <= 0:
+                progress[category] = 0
+            else:
+                progress[category] = (spending_data[category] / budget_data[category]) * 100
+
         return progress, spending_data, budget_data
 
     def hsl_to_rgb(self, h, s, l):
@@ -152,36 +153,60 @@ class BudgetProgress(QWidget):
         hue = 120 - (120 * (percentage / 100))  # Transition from 120° to 0° (Green to Red)
         saturation = 1  # Full saturation
         lightness = 0.4  # Set lightness to 40% for better visibility
-
         return self.hsl_to_rgb(hue, saturation, lightness)
 
     def display_progress_bars(self, layout):
         """Create progress bars for each category"""
         progress, spending_data, budget_data = self.category_progress
 
-        for category, progress_percentage in progress.items():
-            progress_bar = QProgressBar()
-            progress_bar.setValue(min(100, int(progress_percentage)))  # Set percentage value
+        # Add a header
+        header = QLabel("Budget Progress")
+        header.setStyleSheet("font-size: 18px; font-weight: bold; margin-bottom: 10px;")
+        layout.addWidget(header)
 
+        for category, progress_percentage in progress.items():
+            # Container for each category
+            container = QWidget()
+            container_layout = QVBoxLayout(container)
+            container_layout.setSpacing(4)
+
+            progress_bar = QProgressBar()
+            progress_bar.setValue(min(100, int(progress_percentage)))
+            
+            # Enhanced progress bar style
             progress_bar.setStyleSheet(f"""
                 QProgressBar {{
-                    background-color: #f0f0f0;  /* Light grey background */
-                    border: 2px solid #5c5c5c;
+                    background-color: #f0f0f0;
+                    border: 1px solid #ddd;
                     border-radius: 5px;
+                    height: 20px;
+                    text-align: center;
                 }}
                 QProgressBar::chunk {{
-                    background-color: {self.calculate_color(min(100, int(progress_percentage)))};  /* Color changes from green to red */
+                    background-color: {self.calculate_color(min(100, int(progress_percentage)))};
+                    border-radius: 4px;
                 }}
             """)
 
+            # Category label with spending info
+            label_text = f"{category}"
+            amount_text = f"Rp {spending_data[category]:,.2f} / Rp {budget_data[category]:,.2f}"
+            percentage_text = f"({progress_percentage:.1f}%)"
+            
+            category_label = QLabel(label_text)
+            category_label.setStyleSheet("font-weight: bold;")
+            
+            amounts_label = QLabel(f"{amount_text} {percentage_text}")
+            amounts_label.setStyleSheet("color: #666;")
 
-            # Display real spending and budget information
-            progress_label = QLabel(
-                f"{category}: Rp {spending_data[category]:,.2f} / Rp {budget_data[category]:,.2f} ({progress_percentage:.1f}%)"
-            )
+            container_layout.addWidget(category_label)
+            container_layout.addWidget(amounts_label)
+            container_layout.addWidget(progress_bar)
 
-            layout.addWidget(progress_label)
-            layout.addWidget(progress_bar)
+            layout.addWidget(container)
+            
+        # Add some spacing at the bottom
+        layout.addStretch()
 
     def update_progress(self, user_id):
         """Update the budget progress bars based on the new user_id."""
