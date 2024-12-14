@@ -6,6 +6,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from decimal import Decimal
 from models.transaction import TransactionType
+from models.budget import Category
 
 class TransactionPage(QWidget):
     def __init__(self, user_id, controller, parent=None):
@@ -88,7 +89,11 @@ class TransactionForm(QDialog):
 
         form_layout = QFormLayout()
         self.amount_input = QLineEdit(str(transaction.amount) if transaction else "")
-        self.category_input = QLineEdit(transaction.category if transaction else "")
+
+        self.category_input = QComboBox()
+        self.category_input.addItems([e.value for e in Category])
+        self.category_input.setCurrentText(transaction.category if transaction else "")
+
         self.type_input = QComboBox()
         self.type_input.addItems([e.value for e in TransactionType])
         self.type_input.setCurrentText(transaction.transaction_type.value if transaction else "")
@@ -118,21 +123,34 @@ class TransactionForm(QDialog):
         except:
             QMessageBox.warning(self, "Error", "Amount must be a valid number.")
             return
-        category = self.category_input.text()
+        
+        amount = int(amount * 100) // 100  # Round to 2 decimal places
+        
+        category = self.category_input.currentText()
         transaction_type = self.type_input.currentText()
         description = self.description_input.text()
 
         if category and amount > 0:
-            if self.transaction:  # Update existing transaction
-                self.controller.update_transaction(
-                    self.transaction.transaction_id, amount, category, transaction_type, description
-                )
-            else:  # Create new transaction
-                self.controller.create_transaction(self.user_id, amount, category, transaction_type, description)
+            # Show a confirmation dialog before saving the transaction
+            confirm = QMessageBox.question(
+                self, "Confirm Transaction", 
+                f"Are you sure you want to create a transaction of Rp {amount} in category '{category}'?", 
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+            )
+            if confirm == QMessageBox.Yes:
+                if self.transaction:  # Update existing transaction
+                    self.controller.update_transaction(
+                        self.transaction.transaction_id, amount, category, transaction_type, description
+                    )
+                else:  # Create new transaction
+                    self.controller.create_transaction(self.user_id, amount, category, transaction_type, description)
 
-            self.accept()
+                self.accept()
+            else:
+                self.reject()  # Reject the dialog if user clicks 'No'
         else:
             QMessageBox.warning(self, "Error", "Please provide valid inputs.")
+
 
 
 class TransactionDetailDialog(QDialog):
@@ -147,11 +165,11 @@ class TransactionDetailDialog(QDialog):
         self.layout = QVBoxLayout(self)
 
         # Details
-        self.layout.addWidget(QLabel(f"Category: {transaction.category}"))
-        self.layout.addWidget(QLabel(f"Amount: {transaction.amount}"))
-        self.layout.addWidget(QLabel(f"Type: {transaction.transaction_type.value}"))
-        self.layout.addWidget(QLabel(f"Description: {transaction.description}"))
-        self.layout.addWidget(QLabel(f"Date: {transaction.date}"))
+        self.layout.addWidget(QLabel(f"Category    :    {transaction.category}"))
+        self.layout.addWidget(QLabel(f"Amount      : Rp {transaction.amount}"))
+        self.layout.addWidget(QLabel(f"Type        :    {transaction.transaction_type.value}"))
+        self.layout.addWidget(QLabel(f"Description :    {transaction.description}"))
+        self.layout.addWidget(QLabel(f"Date        : {transaction.date}"))
 
         # Buttons
         button_layout = QHBoxLayout()
