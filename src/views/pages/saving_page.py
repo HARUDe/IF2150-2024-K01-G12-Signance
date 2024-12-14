@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout
 
-class SavingPage(QWidget):
+class SavingsPage(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Savings")

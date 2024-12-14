@@ -6,10 +6,13 @@ from PyQt5.QtWidgets import (
 from .pages import LoginPage, DashboardPage, TransactionPage, BudgetPage, SavingPage, RegisterPage
 from controllers import BudgetController, UserController
 
+from .pages import LoginPage, RegisterPage, DashboardPage, TransactionPage, SavingsPage, BudgetPage
+from controllers import TransactionController
+
 budget_controller = BudgetController()
-user_controller = UserController()
-# saving_controller = SavingsController() 
-# transaction_controller = TransactionController() 
+saving_controller = SavingsController() 
+transaction_controller = TransactionController() 
+# user_controller = UserController()
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -33,8 +36,8 @@ class MainWindow(QMainWindow):
         # Pages
         self.pages = {
             "Dashboard": DashboardPage(),
-            "Transactions": TransactionPage(),
-            "Savings": SavingPage(),
+            "Transactions": TransactionPage(self.user_id, transaction_controller),
+            "Savings": SavingsPage(),
             "Budget": BudgetPage(),
 
             "Login": LoginPage(self),
@@ -100,8 +103,10 @@ class MainWindow(QMainWindow):
 
     def switch_page(self, page_name):
         page_widget = self.pages[page_name]
+        
         if page_name == "Dashboard":
             page_widget.update_dashboard()
+
         self.content_area.setCurrentWidget(page_widget)
         # Show or hide the sidebar based on the current page
         if page_name in ["Login", "Register"]:
