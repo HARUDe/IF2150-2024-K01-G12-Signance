@@ -15,7 +15,9 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Signance - Financial Manager")
         self.setGeometry(100, 100, 1200, 800)
-        self.setWindowIcon(QIcon("img/logo.png"))
+
+        self.setWindowIcon(QIcon("img/no_text.png"))
+
         self.logged_in = False
         self.user_id = None
         self.user_name = ""  # This will store the logged-in user's name

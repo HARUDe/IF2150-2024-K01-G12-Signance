@@ -1,13 +1,13 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
-from PyQt5.QtWidgets import QProgressBar
-from PyQt5.QtWidgets import QVBoxLayout, QWidget
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar, QPushButton, QSpacerItem, QSizePolicy
+from PyQt5.QtWidgets import (
+    QWidget, QVBoxLayout, QLabel, QPushButton,
+    QSpacerItem, QSizePolicy, QHBoxLayout, QProgressBar
+)
+from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
-from datetime import datetime
-from decimal import Decimal
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import datetime
+import colorsys
 
 # Line Chart for Monthly Spending
 class LineChart(QWidget):
@@ -19,7 +19,7 @@ class LineChart(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout()
-        self.canvas = FigureCanvas(plt.figure())
+        self.canvas = FigureCanvas(plt.figure())  # Create a figure for the canvas
         layout.addWidget(self.canvas)
 
         self.monthly_spending_data = self.get_monthly_spending_data()  # Fetch the data
@@ -29,7 +29,7 @@ class LineChart(QWidget):
 
     def get_monthly_spending_data(self):
         """Fetch monthly spending data for the user"""
-        # Placeholder data for the last 6 months
+        # Replace this with actual data fetching logic
         data = {
             'January': 1200,
             'February': 1500,
@@ -46,13 +46,25 @@ class LineChart(QWidget):
         months = list(data.keys())
         spending = list(data.values())
 
-        fig, ax = plt.subplots()
-        ax.plot(months, spending, marker='o')
+        # Clear the existing figure to avoid overlapping plots
+        self.canvas.figure.clear()
+
+        # Add a subplot to the existing figure
+        ax = self.canvas.figure.add_subplot(111)
+        ax.plot(months, spending, marker='o', color='blue')
 
         ax.set_title('Monthly Spending')
         ax.set_xlabel('Month')
-        ax.set_ylabel('Amount')
+        ax.set_ylabel('Amount ($)')
+        ax.grid(True)
+
+        # Render the plot on the canvas
         self.canvas.draw()
+
+    def update_chart(self):
+        """Update the line chart with new data"""
+        self.monthly_spending_data = self.get_monthly_spending_data()
+        self.plot_line_chart()
 
 # Budget Progress Bars for Categories
 class BudgetProgress(QWidget):
@@ -64,16 +76,13 @@ class BudgetProgress(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        layout = QVBoxLayout()
-
-        self.category_progress = self.get_category_progress()
-        self.display_progress_bars(layout)
-
-        self.setLayout(layout)
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+        self.update_progress(self.user_id)
 
     def get_category_progress(self):
         """Fetch the user's budget and current spending for each category"""
-        # Placeholder data for budget and spending
+        # Replace this with actual data fetching logic
         budget_data = {
             'Food': 1000000,
             'Transportation': 500000,
@@ -82,8 +91,8 @@ class BudgetProgress(QWidget):
             'Others': 150000,
         }
         spending_data = {
-            'Food': 512000,
-            'Transportation': 350000,
+            'Food': 992000,
+            'Transportation': 550000,
             'Entertainment': 200000,
             'Education': 150000,
             'Others': 50000,
@@ -94,29 +103,64 @@ class BudgetProgress(QWidget):
         }
         return progress, spending_data, budget_data
 
+    def hsl_to_rgb(self, h, s, l):
+        r, g, b = colorsys.hls_to_rgb(h / 360.0, l, s)
+        return f"rgb({int(r * 255)}, {int(g * 255)}, {int(b * 255)})"
+
+    def calculate_color(self, percentage):
+        hue = 120 - (120 * (percentage / 100))  # Transition from 120° to 0° (Green to Red)
+        saturation = 1  # Full saturation
+        lightness = 0.4  # Set lightness to 40% for better visibility
+
+        return self.hsl_to_rgb(hue, saturation, lightness)
+
     def display_progress_bars(self, layout):
         """Create progress bars for each category"""
         progress, spending_data, budget_data = self.category_progress
 
         for category, progress_percentage in progress.items():
             progress_bar = QProgressBar()
-            progress_bar.setValue(int(progress_percentage))  # Set percentage value
-            progress_bar.setStyleSheet("QProgressBar::chunk {background-color: #4CAF50;}")
+            progress_bar.setValue(min(100, int(progress_percentage)))  # Set percentage value
+
+            progress_bar.setStyleSheet(f"""
+                QProgressBar {{
+                    background-color: #f0f0f0;  /* Light grey background */
+                    border: 2px solid #5c5c5c;
+                    border-radius: 5px;
+                }}
+                QProgressBar::chunk {{
+                    background-color: {self.calculate_color(min(100, int(progress_percentage)))};  /* Color changes from green to red */
+                }}
+            """)
+
 
             # Display real spending and budget information
             progress_label = QLabel(
-                f"{category}: {spending_data[category]:,.2f} / {budget_data[category]:,.2f} ({progress_percentage:.1f}%)"
+                f"{category}: Rp {spending_data[category]:,.2f} / Rp {budget_data[category]:,.2f} ({progress_percentage:.1f}%)"
             )
 
             layout.addWidget(progress_label)
             layout.addWidget(progress_bar)
 
+    def update_progress(self, user_id):
+        """Update the budget progress bars based on the new user_id."""
+        self.user_id = user_id
+        # Clear existing widgets
+        while self.layout.count():
+            child = self.layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+        # Fetch progress data based on user_id
+        self.category_progress = self.get_category_progress()
+        # Create progress bars
+        self.display_progress_bars(self.layout)
 
-
-
-
+# Main DashboardPage
 class DashboardPage(QWidget):
-    def __init__(self, user_id, user_controller, transaction_controller, budget_controller, switch_to_savings_page, parent=None):
+    def __init__(
+        self, user_id, user_controller, transaction_controller,
+        budget_controller, switch_to_savings_page, parent=None
+    ):
         super().__init__(parent)
         self.user_controller = user_controller
         self.budget_controller = budget_controller
@@ -127,7 +171,8 @@ class DashboardPage(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        main_layout = QVBoxLayout(self)
+        # Main vertical layout
+        main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignTop)
 
         # Welcome Label
@@ -145,23 +190,27 @@ class DashboardPage(QWidget):
         # Spacer between labels and charts
         main_layout.addItem(QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
-        # Add charts and progress bars
-        chart_layout = QVBoxLayout()  # To hold the charts and progress bars separately
+        # Horizontal layout for charts and progress bars
+        charts_layout = QHBoxLayout()
 
-        # Create widgets for charts
-        line_chart = LineChart(self.user_id, self.transaction_controller)
-        chart_layout.addWidget(line_chart)
+        # Line Chart
+        self.line_chart = LineChart(self.user_id, self.transaction_controller)
+        self.line_chart.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        charts_layout.addWidget(self.line_chart)
 
         # Add a spacer between the line chart and the progress bars
-        spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        chart_layout.addItem(spacer)
+        charts_layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
-        # Add budget progress widget
-        budget_progress = BudgetProgress(self.user_id, self.budget_controller, self.transaction_controller)
-        chart_layout.addWidget(budget_progress)
+        # Budget Progress
+        self.budget_progress = BudgetProgress(self.user_id, self.budget_controller, self.transaction_controller)
+        self.budget_progress.setFixedWidth(350)  # Set a fixed width for progress bars
+        charts_layout.addWidget(self.budget_progress)
 
-        # Add the chart layout to the main layout
-        main_layout.addLayout(chart_layout)
+        # Add the horizontal charts layout to the main layout
+        main_layout.addLayout(charts_layout)
+
+        # Spacer between charts and button
+        main_layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
         # Button for savings section
         self.savings_button = QPushButton("Check Your Savings")
@@ -178,20 +227,30 @@ class DashboardPage(QWidget):
             }
         """)
         self.savings_button.clicked.connect(self.switch_to_savings_page)
-        main_layout.addWidget(self.savings_button)
+        main_layout.addWidget(self.savings_button, alignment=Qt.AlignCenter)
+
+        # Set the main layout
+        self.setLayout(main_layout)
 
     def update_dashboard(self):
         """Update the dashboard with the latest user info and monthly spending."""
         logged_in_user = self.user_controller.get_logged_in_user()
         if logged_in_user:
             self.welcome_label.setText(f"Welcome, {logged_in_user.username}!")
+            self.user_id = logged_in_user.user_id
         else:
             self.welcome_label.setText("Welcome!")
+            self.user_id = None
 
-        total_spending = self.transaction_controller.calculate_monthly_spending(logged_in_user.user_id if logged_in_user else 1)
-        self.spending_label.setText(f"Total Spending This Month: ${total_spending:.2f}")
+        total_spending = self.transaction_controller.calculate_monthly_spending(
+            logged_in_user.user_id if logged_in_user else 1
+        )
+        self.spending_label.setText(f"Total Spending This Month: Rp {total_spending:.2f}")
+
+        # Update child widgets
+        self.line_chart.update_chart()
+        self.budget_progress.update_progress(self.user_id)
     
-
     def income_vs_outcome_chart(self):
         """Placeholder for the income vs outcome chart logic"""
         pass
