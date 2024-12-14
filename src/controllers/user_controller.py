@@ -28,6 +28,7 @@ class UserController:
                     password_hash=user[3],
                     user_id=user[0]
                 )
+                
                 return user
         except Exception as e:
             print(f"An error occurred: {e}")
@@ -113,6 +114,7 @@ class UserController:
         self.logged_in_user = None
 
     def get_logged_in_user(self):
+        print(self.logged_in_user)
         return self.logged_in_user
 
     def get_user_by_username_or_email(self, username_or_email):

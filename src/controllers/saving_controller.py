@@ -107,6 +107,29 @@ class SavingsController:
             cur.close()
             conn.close()
 
+    def update_current_amount(self, saving_id, current_amount):
+        """Update the current amount of a specific savings goal."""
+        try:
+            current_amount = str(current_amount)
+            # Update the current amount in the database
+            query = """
+                UPDATE savings
+                SET current_amount = ?
+                WHERE saving_id = ?
+            """
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute(query, (current_amount, saving_id))
+            conn.commit()
+
+            print(f"Current amount for savings goal {saving_id} updated to {current_amount}.")
+        except Exception as e:
+            print(f"Error updating current amount: {e}")
+            conn.rollback()
+        finally:
+            cursor.close()
+            conn.close()
+
     def get_all_savings(self, user_id):
         """Fetch all savings for a specific user."""
         conn = get_connection()

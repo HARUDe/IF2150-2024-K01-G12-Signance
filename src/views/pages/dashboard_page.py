@@ -162,6 +162,7 @@ class DashboardPage(QWidget):
         budget_controller, switch_to_savings_page, parent=None
     ):
         super().__init__(parent)
+        print("dashboarid ID in as:", user_id)
         self.user_controller = user_controller
         self.budget_controller = budget_controller
         self.transaction_controller = transaction_controller
@@ -234,17 +235,19 @@ class DashboardPage(QWidget):
 
     def update_dashboard(self):
         """Update the dashboard with the latest user info and monthly spending."""
-        logged_in_user = self.user_controller.get_logged_in_user()
+        logged_in_user = None
         if logged_in_user:
-            self.welcome_label.setText(f"Welcome, {logged_in_user.username}!")
+            self.welcome_label.setText(f"Welcome!")
             self.user_id = logged_in_user.user_id
         else:
             self.welcome_label.setText("Welcome!")
             self.user_id = None
 
+        print(f"User ID: {self.user_id}")
         total_spending = self.transaction_controller.calculate_monthly_spending(
-            logged_in_user.user_id if logged_in_user else 1
+            self.user_id
         )
+        print(f"Total spending this month: {total_spending}")
         self.spending_label.setText(f"Total Spending This Month: Rp {total_spending:.2f}")
 
         # Update child widgets

@@ -131,7 +131,6 @@ class SavingsForm(QDialog):
         else:
             QMessageBox.warning(self, "Error", "Please provide valid inputs.")
 
-
 class SavingsDetailDialog(QDialog):
     def __init__(self, goal, controller, parent=None):
         super().__init__(parent)
@@ -139,22 +138,29 @@ class SavingsDetailDialog(QDialog):
         self.controller = controller
 
         self.setWindowTitle("Savings Goal Details")
-        self.setMinimumSize(300, 200)
+        self.setMinimumSize(300, 250)
 
         self.layout = QVBoxLayout(self)
 
         # Details
         self.layout.addWidget(QLabel(f"Name: {goal.name}"))
         self.layout.addWidget(QLabel(f"Target Amount: {goal.target_amount}"))
-        self.layout.addWidget(QLabel(f"Current Amount: {goal.current_amount}"))
+        
+        # Current Amount with editable field
+        self.current_amount_label = QLabel(f"Current Amount: {goal.current_amount}")
+        self.layout.addWidget(self.current_amount_label)
+        self.current_amount_input = QLineEdit(str(goal.current_amount))  # Input for current amount
+        self.layout.addWidget(self.current_amount_input)
+
         self.layout.addWidget(QLabel(f"Deadline: {goal.deadline}"))
         self.layout.addWidget(QLabel(f"Progress: {goal.get_progress_percentage():.2f}%"))
 
         # Buttons
         button_layout = QHBoxLayout()
-        update_button = QPushButton("Update")
-        update_button.clicked.connect(self.update_savings)
-        button_layout.addWidget(update_button)
+
+        update_goal_button = QPushButton("Update Goal")
+        update_goal_button.clicked.connect(self.update_savings)
+        button_layout.addWidget(update_goal_button)
 
         delete_button = QPushButton("Delete")
         delete_button.clicked.connect(self.delete_savings)
@@ -167,6 +173,25 @@ class SavingsDetailDialog(QDialog):
         self.layout.addLayout(button_layout)
 
     def update_savings(self):
+        # First update the current amount (if changed)
+        try:
+            new_current_amount = Decimal(self.current_amount_input.text())
+        except:
+            QMessageBox.warning(self, "Error", "Current amount must be a valid number.")
+            return
+        
+        # Ensure the current amount is not negative
+        if new_current_amount >= 0:
+            # Update current amount via the controller
+            self.controller.update_current_amount(self.goal.saving_id, new_current_amount)
+            # Update the local object and the label
+            self.goal.current_amount = new_current_amount
+            self.current_amount_label.setText(f"Current Amount: {new_current_amount}")
+        else:
+            QMessageBox.warning(self, "Error", "Current amount must be a positive number.")
+            return
+
+        # Now update the rest of the goal if needed
         dialog = SavingsForm(user_id=self.goal.user_id, controller=self.controller, goal=self.goal, parent=self)
         if dialog.exec_():  # If the dialog is accepted
             self.accept()  # Close the details dialog
@@ -179,3 +204,6 @@ class SavingsDetailDialog(QDialog):
         if confirm == QMessageBox.Yes:
             self.controller.delete_saving(self.goal.saving_id)
             self.accept()
+
+
+

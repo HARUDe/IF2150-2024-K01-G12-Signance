@@ -92,9 +92,11 @@ class TransactionController:
 
     def calculate_monthly_spending(self, user_id):
         """Calculate total spending for the current month."""
+        print(user_id)
         if not user_id:
             return Decimal(0)
         
+        print(user_id)
         try:
             current_month = datetime.now().month
             current_year = datetime.now().year
@@ -108,6 +110,7 @@ class TransactionController:
             rows = self.cursor.fetchall()
             
             total_spending = sum(Decimal(row[0]) for row in rows)
+            print(total_spending)
             return total_spending
         except Exception as e:
             print(f"Error calculating monthly spending: {e}")
