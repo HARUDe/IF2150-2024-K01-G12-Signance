@@ -1,7 +1,9 @@
 # src/controllers/UserController.py
 
 from models.user import User
+from models.budget import Category
 from database.database import get_connection
+from datetime import datetime
 
 class UserController:
     def __init__(self):
@@ -48,6 +50,28 @@ class UserController:
                 "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)", 
                 (username, email, password)
             )
+            user_id = cur.lastrowid
+            
+            default_amount = 1000000  # 1,000,000 default amount
+            current_date = datetime.now()
+            end_date = datetime(current_date.year + 1, current_date.month, current_date.day)
+            
+            categories = [
+                Category.FOODS.value,
+                Category.TRANSPORT.value,
+                Category.ENTERTAINMENT.value, 
+                Category.EDUCATION.value,
+                Category.OTHER.value
+            ]
+            
+            for category in categories:
+                cur.execute(
+                    """INSERT INTO budgets 
+                       (user_id, category, amount, start_date, end_date) 
+                       VALUES (?, ?, ?, ?, ?)""",
+                    (user_id, category, default_amount, current_date, end_date)
+                )
+            
             conn.commit()
             return True, "Registration successful"
         except Exception as e:
