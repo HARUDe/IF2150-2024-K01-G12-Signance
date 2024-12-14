@@ -12,6 +12,12 @@ budget_controller = BudgetController()
 transaction_controller = TransactionController()
 
 # src/views/main_window.py
+from controllers import BudgetController, UserController, TransactionController, SavingsController
+
+budget_controller = BudgetController()
+saving_controller = SavingsController() 
+transaction_controller = TransactionController() 
+user_controller = UserController()
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -36,10 +42,11 @@ class MainWindow(QMainWindow):
 
         # Pages
         self.pages = {
-            "Dashboard": DashboardPage(self.user_id, budget_controller, transaction_controller),
             "Transactions": TransactionPage(self.user_id, transaction_controller),
-            "Savings": SavingsPage(),
-            "Budget": BudgetPage(),
+            "Dashboard": DashboardPage(self.user_id, user_controller, transaction_controller, budget_controller, lambda: self.switch_page("Savings")),
+            "Transactions": TransactionPage(self.user_id, transaction_controller),
+            "Savings": SavingsPage(self.user_id, saving_controller),
+            "Budget": BudgetPage(self.user_id, budget_controller),
             "Login": LoginPage(self),
             "Register": RegisterPage(self)
         }

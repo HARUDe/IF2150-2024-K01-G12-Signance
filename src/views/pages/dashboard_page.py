@@ -1,58 +1,13 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PyQt5.QtWidgets import QProgressBar
 from PyQt5.QtWidgets import QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar, QPushButton, QSpacerItem, QSizePolicy
+from PyQt5.QtCore import Qt
+from datetime import datetime
+from decimal import Decimal
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import datetime
-
-
-# Donut Chart for Outcome Categories
-class DonutChart(QWidget):
-    def __init__(self, user_id, transaction_controller, parent=None):
-        super().__init__(parent)
-        self.user_id = user_id
-        self.transaction_controller = transaction_controller
-        self.init_ui()
-
-    def init_ui(self):
-        layout = QVBoxLayout()
-        self.canvas = FigureCanvas(plt.figure())
-        layout.addWidget(self.canvas)
-
-        self.category_data = self.get_category_data()  # Get the data for categories
-        self.plot_donut_chart()
-
-        self.setLayout(layout)
-
-    def get_category_data(self):
-        """Fetch current month's outcome for each category"""
-        # Placeholder for actual logic to fetch data from the database
-        current_month = datetime.datetime.now().month
-        data = {
-            'Food': 1200,
-            'Transportation': 500,
-            'Entertainment': 300,
-            'Education': 200,
-            'Others': 100,
-        }
-        return data
-
-    def plot_donut_chart(self):
-        """Plot the donut chart with the category data"""
-        data = self.category_data
-        labels = data.keys()
-        sizes = data.values()
-        explode = (0.1, 0, 0, 0, 0)  # "explode" the first slice (Food)
-
-        fig, ax = plt.subplots()
-        ax.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%', startangle=90, pctdistance=0.85)
-
-        # Draw a white circle in the center to make it a donut chart
-        centre_circle = plt.Circle((0, 0), 0.70, color='white')
-        fig.gca().add_artist(centre_circle)
-
-        ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-        self.canvas.draw()
 
 # Line Chart for Monthly Spending
 class LineChart(QWidget):
@@ -157,36 +112,85 @@ class BudgetProgress(QWidget):
             layout.addWidget(progress_bar)
 
 
-# Main DashboardPage
+
+
+
 class DashboardPage(QWidget):
-    def __init__(self, user_id, budget_controller, transaction_controller):
-        super().__init__()
-        self.user_id = user_id
+    def __init__(self, user_id, user_controller, transaction_controller, budget_controller, switch_to_savings_page, parent=None):
+        super().__init__(parent)
+        self.user_controller = user_controller
         self.budget_controller = budget_controller
         self.transaction_controller = transaction_controller
+        self.switch_to_savings_page = switch_to_savings_page
+        self.user_id = user_id
         self.setWindowTitle("Dashboard")
         self.init_ui()
 
     def init_ui(self):
-        layout = QVBoxLayout()
+        main_layout = QVBoxLayout(self)
+        main_layout.setAlignment(Qt.AlignTop)
+
+        # Welcome Label
+        self.welcome_label = QLabel("Welcome!")
+        self.welcome_label.setStyleSheet("font-size: 24px; font-weight: bold;")
+        self.welcome_label.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(self.welcome_label)
+
+        # Spending Label
+        self.spending_label = QLabel("Total Spending This Month: $0.00")
+        self.spending_label.setStyleSheet("font-size: 18px; color: #555;")
+        self.spending_label.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(self.spending_label)
+
+        # Spacer between labels and charts
+        main_layout.addItem(QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Expanding))
+
+        # Add charts and progress bars
+        chart_layout = QVBoxLayout()  # To hold the charts and progress bars separately
 
         # Create widgets for charts
-        donut_chart = DonutChart(self.user_id, self.transaction_controller)
         line_chart = LineChart(self.user_id, self.transaction_controller)
+        chart_layout.addWidget(line_chart)
+
+        # Add a spacer between the line chart and the progress bars
+        spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        chart_layout.addItem(spacer)
+
+        # Add budget progress widget
         budget_progress = BudgetProgress(self.user_id, self.budget_controller, self.transaction_controller)
+        chart_layout.addWidget(budget_progress)
 
-        layout.addWidget(donut_chart)
-        layout.addWidget(line_chart)
-        layout.addWidget(budget_progress)
+        # Add the chart layout to the main layout
+        main_layout.addLayout(chart_layout)
 
-        self.setLayout(layout)
+        # Button for savings section
+        self.savings_button = QPushButton("Check Your Savings")
+        self.savings_button.setStyleSheet("""
+            QPushButton {
+                font-size: 20px;
+                padding: 15px;
+                background-color: #4CAF50;
+                color: white;
+                border-radius: 10px;
+            }
+            QPushButton:hover {
+                background-color: #388E3C;
+            }
+        """)
+        self.savings_button.clicked.connect(self.switch_to_savings_page)
+        main_layout.addWidget(self.savings_button)
 
     def update_dashboard(self):
-        """Update dashboard with current data"""
-        self.income_vs_outcome_chart()
-        self.monthly_income_outcome_chart()
-        self.current_vs_budget_chart()
-        pass
+        """Update the dashboard with the latest user info and monthly spending."""
+        logged_in_user = self.user_controller.get_logged_in_user()
+        if logged_in_user:
+            self.welcome_label.setText(f"Welcome, {logged_in_user.username}!")
+        else:
+            self.welcome_label.setText("Welcome!")
+
+        total_spending = self.transaction_controller.calculate_monthly_spending(logged_in_user.user_id if logged_in_user else 1)
+        self.spending_label.setText(f"Total Spending This Month: ${total_spending:.2f}")
+    
 
     def income_vs_outcome_chart(self):
         """Placeholder for the income vs outcome chart logic"""

@@ -8,4 +8,4 @@ from .budget_page import BudgetPage
 from .saving_page import SavingsPage
 from .register_page import RegisterPage
 
-__all__ = ['main_window', 'LoginPage', 'DashboardPage', 'TransactionPage', 'BudgetPage', 'SavingPage', 'RegisterPage']
+__all__ = ['main_window', 'LoginPage', 'DashboardPage', 'TransactionPage', 'BudgetPage', 'SavingsPage', 'RegisterPage']
