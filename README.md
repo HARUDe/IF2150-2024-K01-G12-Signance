@@ -1,4 +1,4 @@
-![Logo of the project](https://raw.githubusercontent.com/jehna/readme-best-practices/master/sample-logo.png)
+![Logo of the project](./img/white_text.png)
 
 # Signance
 > Additional information or tagline
@@ -25,26 +25,35 @@ pip install -r requirements.txt
 python src/main.py
 ```
 
-## Modul
+## Feature
 
-#### Nama Modul
-1. Lorem ipsum
-2.
-3.
+#### Nama Feature
+1. Login
+2. Register
+3. Dashboard
+4. Savings
+5. Transactions
+6. Budget
 
 #### Pembagian Tugas
-| Name                               |   Modul    |
-|------------------------------------|------------|
-|       Mochammad Fariz Rifqi R      |  |
-|       Muhammad Jibril Ibrahim      |  |
-|       Darrel Adinarya Sunanda      |  |
-|   Muhammad Hazim Ramadhan Prajoda  |  |
+| Name                               |         Feature         |
+|------------------------------------|-------------------------|
+|       Mochammad Fariz Rifqi R      |  Dashboard, Budget      |
+|       Muhammad Jibril Ibrahim      |  Savings, Transactions  |
+|   Muhammad Hazim Ramadhan Prajoda  |  Login, Register        |
+|       Darrel Adinarya Sunanda      |                         |
 
 #### Screenshot
 
 -----
 
 ## Daftar Tabel Basis Data
+
+#### Nama Table
+1. user
+2. budgets
+3. savings
+4. transactions
 
 -----
 

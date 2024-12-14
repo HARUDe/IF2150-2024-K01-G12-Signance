@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
                            QLabel, QLineEdit, QPushButton, QMessageBox)
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import QPixmap
 from controllers.user_controller import UserController
 
 
@@ -30,12 +31,10 @@ class LoginPage(QWidget):
         
         # Bagian logo/brand
         brand_layout = QHBoxLayout()
-        logo_label = QLabel("Σ")
-        logo_label.setStyleSheet("""
-            font-size: 24px;
-            font-weight: bold;
-            margin-right: 10px;
-        """)
+        logo_label = QLabel()
+        pixmap = QPixmap("img/no_text.png")  
+        logo_label.setPixmap(pixmap.scaled(50, 50, Qt.KeepAspectRatio, Qt.SmoothTransformation)) 
+        logo_label.setAlignment(Qt.AlignCenter) 
         brand_name = QLabel("Signance")
         brand_name.setStyleSheet("""
             font-size: 20px;
@@ -197,6 +196,16 @@ class LoginPage(QWidget):
             );
 
         """)
+
+        # Create a QLabel for the image and add it to the right widget
+        image_label = QLabel()
+        pixmap = QPixmap("img/white_text.png")  # Path to the image
+        image_label.setPixmap(pixmap.scaled(400, 400, Qt.KeepAspectRatio, Qt.SmoothTransformation))  # Adjust size as needed
+        image_label.setAlignment(Qt.AlignCenter)
+
+        right_layout = QVBoxLayout()
+        right_layout.addWidget(image_label)
+        right_widget.setLayout(right_layout)
         
         # Tambahkan kedua bagian ke layout utama
         main_layout.addWidget(left_widget)
