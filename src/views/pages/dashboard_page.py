@@ -110,19 +110,33 @@ class BudgetProgress(QWidget):
     def get_category_progress(self):
         """Fetch the user's budget and current spending for each category"""
         # Replace this with actual data fetching logic
+        class_budget = self.budget_controller.get_all_budgets(self.user_id)
+        print(class_budget)
+        
+        budgets = []
+        for budget in class_budget:
+            budgets.append(budget.amount)
+
+        # UNCOMMENT THIS FOR TESTING PURPOSES
+        # n = len(budgets)
+        # for i in range(6 - n):
+        #     budgets.append(100)
+
         budget_data = {
-            'Food': 1000000,
-            'Transportation': 500000,
-            'Entertainment': 400000,
-            'Education': 200000,
-            'Others': 150000,
+            'Food': budgets[0],
+            'Transport': budgets[1],
+            'Entertainment': budgets[2],
+            'Education': budgets[3],
+            'Others': budgets[4],
         }
+
+        spending = self.transaction_controller.calculate_monthly_category_spending(self.user_id)
         spending_data = {
-            'Food': 992000,
-            'Transportation': 550000,
-            'Entertainment': 200000,
-            'Education': 150000,
-            'Others': 50000,
+            'Food': spending[0],
+            'Transport': spending[1],
+            'Entertainment': spending[2],
+            'Education': spending[3],
+            'Others': spending[4],
         }
         progress = {
             category: (spending_data[category] / budget_data[category]) * 100

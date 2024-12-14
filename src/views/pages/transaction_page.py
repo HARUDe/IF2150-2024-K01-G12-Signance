@@ -51,7 +51,7 @@ class TransactionPage(QWidget):
 
     def refresh_transaction_list(self):
         self.list_widget.clear()
-        transactions = self.controller.get_all_transactions()
+        transactions = self.controller.get_transactions_by_user_id(self.user_id)
         for transaction in transactions:
             self.list_widget.addItem(f"{transaction.category} - {transaction.amount} ({transaction.transaction_type.value})")
 

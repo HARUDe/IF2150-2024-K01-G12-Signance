@@ -68,6 +68,29 @@ class TransactionController:
         except Exception as e:
             print(f"Error fetching all transactions: {e}")
             return []
+    
+    def get_transactions_by_user_id(self, user_id):
+        """Fetch all transactions for a specific user."""
+        try:
+            query = "SELECT * FROM transactions WHERE user_id = ?"
+            self.cursor.execute(query, (user_id,))
+            rows = self.cursor.fetchall()
+            transactions = []
+            for row in rows:
+                transaction = Transaction(
+                    user_id=row[1],
+                    amount=row[2],
+                    category=row[3],
+                    transaction_type=TransactionType(row[4]),
+                    description=row[5],
+                    transaction_id=row[0],
+                    date=row[6]
+                )
+                transactions.append(transaction)
+            return transactions
+        except Exception as e:
+            print(f"Error fetching transactions by user ID: {e}")
+            return []
 
     def get_transaction_by_id(self, transaction_id):
         """Fetch a transaction by its ID."""
