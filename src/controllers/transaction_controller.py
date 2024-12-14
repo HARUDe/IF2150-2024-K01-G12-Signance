@@ -68,6 +68,29 @@ class TransactionController:
         except Exception as e:
             print(f"Error fetching all transactions: {e}")
             return []
+    
+    def get_transactions_by_user_id(self, user_id):
+        """Fetch all transactions for a specific user."""
+        try:
+            query = "SELECT * FROM transactions WHERE user_id = ?"
+            self.cursor.execute(query, (user_id,))
+            rows = self.cursor.fetchall()
+            transactions = []
+            for row in rows:
+                transaction = Transaction(
+                    user_id=row[1],
+                    amount=row[2],
+                    category=row[3],
+                    transaction_type=TransactionType(row[4]),
+                    description=row[5],
+                    transaction_id=row[0],
+                    date=row[6]
+                )
+                transactions.append(transaction)
+            return transactions
+        except Exception as e:
+            print(f"Error fetching transactions by user ID: {e}")
+            return []
 
     def get_transaction_by_id(self, transaction_id):
         """Fetch a transaction by its ID."""
@@ -149,6 +172,90 @@ class TransactionController:
         except Exception as e:
             print(f"Error calculating monthly category spending: {e}")
             return [0] * 5  # Return 0 for all categories if an error occurs
+        
+    def calculate_last_six_months_spending(self, user_id):
+        """Calculate total spending for the past 6 months, returning a list of amounts for each month."""
+        if not user_id:
+            return [Decimal(0)] * 6  # Return 0 for each month if no user_id is provided
+
+        try:
+            # Get the current date and initialize the list of spending for the last 6 months
+            current_month = datetime.now().month
+            current_year = datetime.now().year
+            month_spending = []
+
+            # Loop through the past 6 months
+            for i in range(6):
+                # Calculate the month and year for the current iteration
+                month = (current_month - i - 1) % 12 + 1  # Wrap around if going back to previous years
+                year = current_year if current_month - i > 0 else current_year - 1
+
+                # Format the month and year for the query
+                month_str = f"{month:02d}"
+                year_str = str(year)
+
+                # Query to get total spending for that month
+                query = """
+                SELECT amount
+                FROM transactions
+                WHERE user_id = ? AND transaction_type = ? AND 
+                      strftime('%m', date) = ? AND strftime('%Y', date) = ?
+                """
+                self.cursor.execute(query, (user_id, "expense", month_str, year_str))
+                rows = self.cursor.fetchall()
+
+                # Sum the amounts for that month
+                total_spending = sum(Decimal(row[0]) for row in rows)
+                month_spending.append(total_spending)
+
+            # Return the list of total spending for the last 6 months
+            return month_spending
+
+        except Exception as e:
+            print(f"Error calculating spending for the last 6 months: {e}")
+            return [Decimal(0)] * 6  # Return 0 for each month if an error occurs
+        
+    def calculate_last_six_months_income(self, user_id):
+        """Calculate total spending for the past 6 months, returning a list of amounts for each month."""
+        if not user_id:
+            return [Decimal(0)] * 6  # Return 0 for each month if no user_id is provided
+
+        try:
+            # Get the current date and initialize the list of spending for the last 6 months
+            current_month = datetime.now().month
+            current_year = datetime.now().year
+            month_spending = []
+
+            # Loop through the past 6 months
+            for i in range(6):
+                # Calculate the month and year for the current iteration
+                month = (current_month - i - 1) % 12 + 1  # Wrap around if going back to previous years
+                year = current_year if current_month - i > 0 else current_year - 1
+
+                # Format the month and year for the query
+                month_str = f"{month:02d}"
+                year_str = str(year)
+
+                # Query to get total spending for that month
+                query = """
+                SELECT amount
+                FROM transactions
+                WHERE user_id = ? AND transaction_type = ? AND 
+                      strftime('%m', date) = ? AND strftime('%Y', date) = ?
+                """
+                self.cursor.execute(query, (user_id, "income", month_str, year_str))
+                rows = self.cursor.fetchall()
+
+                # Sum the amounts for that month
+                total_spending = sum(Decimal(row[0]) for row in rows)
+                month_spending.append(total_spending)
+
+            # Return the list of total spending for the last 6 months
+            return month_spending
+
+        except Exception as e:
+            print(f"Error calculating spending for the last 6 months: {e}")
+            return [Decimal(0)] * 6  # Return 0 for each month if an error occurs
 
     def close(self):
         """Close the database connection and cursor when done."""
