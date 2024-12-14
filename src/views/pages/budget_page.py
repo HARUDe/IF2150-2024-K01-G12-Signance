@@ -120,8 +120,10 @@ class BudgetForm(QDialog):
         
         # Convert string dates to QDate
         if budget:
-            start_date = datetime.strptime(budget.start_date, "%Y-%m-%d")
-            end_date = datetime.strptime(budget.end_date, "%Y-%m-%d")
+            # Try multiple date parsing formats
+            start_date = self._parse_date(budget.start_date)
+            end_date = self._parse_date(budget.end_date)
+            
             self.start_date_input.setDate(QDate(start_date.year, start_date.month, start_date.day))
             self.end_date_input.setDate(QDate(end_date.year, end_date.month, end_date.day))
         else:
@@ -150,6 +152,24 @@ class BudgetForm(QDialog):
 
         self.layout.addLayout(button_layout)
 
+    def _parse_date(self, date_str):
+        """
+        Try multiple date parsing formats
+        """
+        date_formats = [
+            "%Y-%m-%d %H:%M:%S.%f",  # Full timestamp with microseconds
+            "%Y-%m-%d %H:%M:%S",     # Timestamp without microseconds
+            "%Y-%m-%d",              # Date only
+        ]
+
+        for fmt in date_formats:
+            try:
+                return datetime.strptime(date_str, fmt)
+            except ValueError:
+                continue
+        
+        raise ValueError(f"Unable to parse date: {date_str}")
+
     def save_budget(self):
         try:
             amount = Decimal(self.amount_input.text())
@@ -173,7 +193,7 @@ class BudgetForm(QDialog):
                 QMessageBox.warning(self, "Error", message)
         else:
             QMessageBox.warning(self, "Error", "Please provide valid inputs.")
-
+   
 
 class BudgetDetailDialog(QDialog):
     def __init__(self, budget, controller, parent=None):
@@ -182,28 +202,57 @@ class BudgetDetailDialog(QDialog):
         self.controller = controller
 
         self.setWindowTitle("Budget Details")
-        self.setMinimumSize(300, 200)
+        self.setMinimumSize(400, 300)
 
         self.layout = QVBoxLayout(self)
 
-        # Details
-        self.layout.addWidget(QLabel(f"Category: {budget.category}"))
-        self.layout.addWidget(QLabel(f"Total Amount: {budget.amount}"))
-        self.layout.addWidget(QLabel(f"Current Amount: {budget.current_amount}"))
-        self.layout.addWidget(QLabel(f"Start Date: {budget.start_date}"))
-        self.layout.addWidget(QLabel(f"End Date: {budget.end_date}"))
-        self.layout.addWidget(QLabel(f"Remaining: {budget.get_remaining()}"))
-        self.layout.addWidget(QLabel(f"Progress: {budget.get_percentage_used():.2f}%"))
+        # Details form layout
+        details_layout = QFormLayout()
+        details_layout.addRow("Category:", QLabel(budget.category.value))
+
+        # Amount details
+        self.total_amount_label = QLabel(f"Rp {int(budget.amount):,}")
+        details_layout.addRow("Total Amount:", self.total_amount_label)
+
+        self.current_amount_label = QLabel(f"Rp {int(budget.current_amount):,}")
+        details_layout.addRow("Current Amount:", self.current_amount_label)
+
+        # Editable dates
+        self.start_date_input = QDateEdit()
+        self.end_date_input = QDateEdit()
+        
+        # Convert string dates to QDate
+        start_date = datetime.strptime(budget.start_date, "%Y-%m-%d %H:%M:%S.%f")
+        end_date = datetime.strptime(budget.end_date, "%Y-%m-%d %H:%M:%S.%f")
+        
+        self.start_date_input.setDate(QDate(start_date.year, start_date.month, start_date.day))
+        self.end_date_input.setDate(QDate(end_date.year, end_date.month, end_date.day))
+
+        self.start_date_input.setCalendarPopup(True)
+        self.end_date_input.setCalendarPopup(True)
+
+        details_layout.addRow("Start Date:", self.start_date_input)
+        details_layout.addRow("End Date:", self.end_date_input)
+
+        # Additional details
+        remaining_label = QLabel(f"Rp {int(budget.get_remaining()):,}")
+        details_layout.addRow("Remaining:", remaining_label)
+
+        progress_label = QLabel(f"{budget.get_percentage_used():.2f}%")
+        details_layout.addRow("Progress:", progress_label)
+
+        self.layout.addLayout(details_layout)
 
         # Buttons
         button_layout = QHBoxLayout()
-        update_button = QPushButton("Update")
+        
+        update_dates_button = QPushButton("Update Dates")
+        update_dates_button.clicked.connect(self.update_budget_dates)
+        button_layout.addWidget(update_dates_button)
+
+        update_button = QPushButton("Update Budget")
         update_button.clicked.connect(self.update_budget)
         button_layout.addWidget(update_button)
-
-        delete_button = QPushButton("Delete")
-        delete_button.clicked.connect(self.delete_budget)
-        button_layout.addWidget(delete_button)
 
         close_button = QPushButton("Close")
         close_button.clicked.connect(self.reject)
@@ -211,7 +260,31 @@ class BudgetDetailDialog(QDialog):
 
         self.layout.addLayout(button_layout)
 
+    def update_budget_dates(self):
+        start_date = self.start_date_input.date().toPyDate()
+        end_date = self.end_date_input.date().toPyDate()
+
+        if start_date < end_date:
+            success, message = self.controller.update_budget(
+                self.budget.budget_id, 
+                start_date=start_date, 
+                end_date=end_date
+            )
+
+            if success:
+                QMessageBox.information(self, "Success", "Budget dates updated successfully.")
+                self.accept()
+            else:
+                QMessageBox.warning(self, "Error", message)
+        else:
+            QMessageBox.warning(self, "Error", "Start date must be before end date.")
+
     def update_budget(self):
-        dialog = BudgetForm(user_id=self.budget.user_id, controller=self.controller, budget=self.budget, parent=self)
+        dialog = BudgetForm(
+            user_id=self.budget.user_id, 
+            controller=self.controller, 
+            budget=self.budget, 
+            parent=self
+        )
         if dialog.exec_():  
-            self.accept() # Close the details dialog
+            self.accept()  # Close the details dialog
