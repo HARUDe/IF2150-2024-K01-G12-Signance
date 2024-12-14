@@ -153,7 +153,7 @@ class TransactionPage(QWidget):
                 child.widget().deleteLater()
 
         # Add new transactions
-        transactions = self.controller.get_all_transactions()
+        transactions = self.controller.get_transactions_by_user_id(self.user_id)
         for transaction in transactions:
             widget = TransactionWidget(transaction)
             widget.mousePressEvent = lambda _, t=transaction: self.show_transaction_detail(t)

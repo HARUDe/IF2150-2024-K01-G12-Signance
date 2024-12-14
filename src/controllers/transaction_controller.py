@@ -68,7 +68,7 @@ class TransactionController:
         except Exception as e:
             print(f"Error fetching all transactions: {e}")
             return []
-    
+            
     def get_transactions_by_user_id(self, user_id):
         """Fetch all transactions for a specific user."""
         try:
