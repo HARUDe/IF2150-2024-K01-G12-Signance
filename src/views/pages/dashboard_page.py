@@ -22,41 +22,66 @@ class LineChart(QWidget):
         self.canvas = FigureCanvas(plt.figure())  # Create a figure for the canvas
         layout.addWidget(self.canvas)
 
-        self.monthly_spending_data = self.get_monthly_spending_data()  # Fetch the data
-        self.plot_line_chart()
+        self.monthly_spending_data = self.get_monthly_spending_data()  # Fetch the spending data
+        self.monthly_income_data = self.get_monthly_income_data()  # Fetch the income data
+        self.plot_line_chart()  # Plot the chart
 
         self.setLayout(layout)
 
     def get_monthly_spending_data(self):
         """Fetch monthly spending data for the user"""
-        # Replace this with actual data fetching logic
-        data = {
-            'January': 1200,
-            'February': 1500,
-            'March': 1000,
-            'April': 900,
-            'May': 1100,
-            'June': 1300
-        }
-        return data
+        data = self.transaction_controller.calculate_last_six_months_spending(self.user_id)
+
+        current_month = datetime.datetime.now().month - 1
+        current_month_list = [(current_month - i) % 12 for i in range(6)]
+        month_name = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+
+        dict_data = {}
+        for i in range(5, -1, -1):
+            dict_data[month_name[current_month_list[i]]] = data[i]
+
+        return dict_data
+    
+    def get_monthly_income_data(self):
+        """Fetch monthly income data for the user"""
+        data = self.transaction_controller.calculate_last_six_months_income(self.user_id)
+
+        current_month = datetime.datetime.now().month - 1
+        current_month_list = [(current_month - i) % 12 for i in range(6)]
+        month_name = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+
+        dict_data = {}
+        for i in range(5, -1, -1):
+            dict_data[month_name[current_month_list[i]]] = data[i]
+
+        return dict_data 
 
     def plot_line_chart(self):
-        """Plot the line chart"""
-        data = self.monthly_spending_data
-        months = list(data.keys())
-        spending = list(data.values())
+        """Plot the line chart for both income and spending"""
+        spending_data = self.monthly_spending_data
+        income_data = self.monthly_income_data
+        months = list(spending_data.keys())
 
         # Clear the existing figure to avoid overlapping plots
         self.canvas.figure.clear()
 
         # Add a subplot to the existing figure
         ax = self.canvas.figure.add_subplot(111)
-        ax.plot(months, spending, marker='o', color='blue')
 
-        ax.set_title('Monthly Spending')
+        # Plot spending data
+        ax.plot(months, list(spending_data.values()), marker='o', color='blue', label='Spending')
+
+        # Plot income data with a different color
+        ax.plot(months, list(income_data.values()), marker='o', color='green', label='Income')
+
+        # Set chart labels and title
+        ax.set_title('Monthly Spending vs Income')
         ax.set_xlabel('Month')
         ax.set_ylabel('Amount ($)')
         ax.grid(True)
+
+        # Add a legend to distinguish between spending and income lines
+        ax.legend()
 
         # Render the plot on the canvas
         self.canvas.draw()
@@ -64,7 +89,9 @@ class LineChart(QWidget):
     def update_chart(self):
         """Update the line chart with new data"""
         self.monthly_spending_data = self.get_monthly_spending_data()
+        self.monthly_income_data = self.get_monthly_income_data()
         self.plot_line_chart()
+
 
 # Budget Progress Bars for Categories
 class BudgetProgress(QWidget):
@@ -83,19 +110,33 @@ class BudgetProgress(QWidget):
     def get_category_progress(self):
         """Fetch the user's budget and current spending for each category"""
         # Replace this with actual data fetching logic
+        class_budget = self.budget_controller.get_all_budgets(self.user_id)
+        print(class_budget)
+        
+        budgets = []
+        for budget in class_budget:
+            budgets.append(budget.amount)
+
+        # UNCOMMENT THIS FOR TESTING PURPOSES
+        # n = len(budgets)
+        # for i in range(6 - n):
+        #     budgets.append(100)
+
         budget_data = {
-            'Food': 1000000,
-            'Transportation': 500000,
-            'Entertainment': 400000,
-            'Education': 200000,
-            'Others': 150000,
+            'Food': budgets[0],
+            'Transport': budgets[1],
+            'Entertainment': budgets[2],
+            'Education': budgets[3],
+            'Others': budgets[4],
         }
+
+        spending = self.transaction_controller.calculate_monthly_category_spending(self.user_id)
         spending_data = {
-            'Food': 992000,
-            'Transportation': 550000,
-            'Entertainment': 200000,
-            'Education': 150000,
-            'Others': 50000,
+            'Food': spending[0],
+            'Transport': spending[1],
+            'Entertainment': spending[2],
+            'Education': spending[3],
+            'Others': spending[4],
         }
         progress = {
             category: (spending_data[category] / budget_data[category]) * 100
