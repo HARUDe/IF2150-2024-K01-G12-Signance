@@ -8,8 +8,7 @@ from controllers.user_controller import UserController
 
 
 class LoginPage(QWidget):
-
-    login_successful = pyqtSignal()
+    login_successful = pyqtSignal(str)
 
     def __init__(self, main_window=None):
         super().__init__()
@@ -307,9 +306,9 @@ class LoginPage(QWidget):
             
         email_or_username = self.email_or_username_input.text()
         password = self.password_input.text()
-        
+
         if self.user_controller.login(email_or_username, password):
-            self.login_successful.emit()
+            self.login_successful.emit(email_or_username)
         else:
             self.show_error(self.email_or_username_input, "Invalid email/username or password")
             self.show_error(self.password_input, "")

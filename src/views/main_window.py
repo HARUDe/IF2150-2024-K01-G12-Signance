@@ -1,27 +1,28 @@
-# src/views/main_window.py
-
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget, QSizePolicy
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget, QSizePolicy, QLabel
 )
-from .pages import LoginPage, DashboardPage, TransactionPage, BudgetPage, SavingPage, RegisterPage
+from .pages import LoginPage, DashboardPage, TransactionPage, BudgetPage, SavingsPage, RegisterPage
 from controllers import BudgetController, UserController
 
 from .pages import LoginPage, RegisterPage, DashboardPage, TransactionPage, SavingsPage, BudgetPage
 from controllers import TransactionController
 
 budget_controller = BudgetController()
-saving_controller = SavingsController() 
-transaction_controller = TransactionController() 
-# user_controller = UserController()
+transaction_controller = TransactionController()
+
+# src/views/main_window.py
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Signance - Financial Manager")
         self.setGeometry(100, 100, 1200, 800)
+        self.setWindowIcon(QIcon("img\logo.png"))
         self.logged_in = False
         self.user_id = None
-        
+        self.user_name = ""  # This will store the logged-in user's name
+
         # Main widget and layout
         main_widget = QWidget()
         main_layout = QHBoxLayout()
@@ -35,11 +36,10 @@ class MainWindow(QMainWindow):
 
         # Pages
         self.pages = {
-            "Dashboard": DashboardPage(),
+            "Dashboard": DashboardPage(self.user_id, budget_controller, transaction_controller),
             "Transactions": TransactionPage(self.user_id, transaction_controller),
             "Savings": SavingsPage(),
             "Budget": BudgetPage(),
-
             "Login": LoginPage(self),
             "Register": RegisterPage(self)
         }
@@ -79,6 +79,11 @@ class MainWindow(QMainWindow):
             if widget is not None:
                 widget.deleteLater()
 
+        # Greeting message for logged-in users
+        if self.logged_in:
+            greeting_label = QLabel(f"Welcome, {self.user_name}")
+            self.sidebar.addWidget(greeting_label)
+
         # Choose pages based on login state
         pages = (
             ["Dashboard", "Transactions", "Savings", "Budget"]
@@ -117,12 +122,19 @@ class MainWindow(QMainWindow):
     def logout(self):
         """Handle logout action."""
         self.logged_in = False
+        self.user_name = ""  # Clear user name on logout
         self.update_sidebar()
         self.switch_page("Login")
 
-    def on_login_successful(self):
+    def on_login_successful(self, username_or_email):
         """Handle successful login."""
+        user_controller = UserController()
+        user = user_controller.get_user_by_username_or_email(username_or_email)
+
         self.logged_in = True
-        self.user_id = 1
+        self.user_id = user[0]
+        self.user_name = user[1]  # Update the user name
+        print(f"Logged in as {self.user_name}")
+        print(f"User ID: {self.user_id}")
         self.update_sidebar()
         self.switch_page("Dashboard")  # Go to the dashboard page

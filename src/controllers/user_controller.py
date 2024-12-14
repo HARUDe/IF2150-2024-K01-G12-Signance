@@ -90,3 +90,25 @@ class UserController:
 
     def get_logged_in_user(self):
         return self.logged_in_user
+
+    def get_user_by_username_or_email(self, username_or_email):
+        """Fetch user by username or email."""
+        conn = get_connection()  # Assuming you have a database connection function
+        cur = conn.cursor()
+        try:
+            # Try to get user by username
+            cur.execute("SELECT * FROM users WHERE username = ?", (username_or_email,))
+            user = cur.fetchone()
+            
+            # If no user is found by username, try with email
+            if not user:
+                cur.execute("SELECT * FROM users WHERE email = ?", (username_or_email,))
+                user = cur.fetchone()
+
+            return user  # Return user details (user_id, username, email, etc.)
+        except Exception as e:
+            print(f"Error fetching user: {e}")
+            return None
+        finally:
+            cur.close()
+            conn.close()
