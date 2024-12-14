@@ -1,43 +1,114 @@
+# src/controllers/budget_controller.py
+
 from decimal import Decimal
 from datetime import datetime
-from typing import List, Optional
-from models.budget import Budget
-
+from models.budget import Budget, Category
+from database.database import get_connection
 
 class BudgetController:
-    def __init__(self):
-        self.budgets = []
+    def update_budget(self, budget_id, amount=None, start_date=None, end_date=None):
+        conn = get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT * FROM budgets WHERE budget_id = ?", (budget_id,))
+            current = cur.fetchone()
+            if not current:
+                return False, "Budget not found"
 
-    # CRUD operations
-    def create_budget(self, user_id, category, amount, start_date, end_date):
-        budget = Budget(user_id, category, amount, start_date, end_date,
-                        budget_id=self.budgets[-1].budget_id + 1 if self.budgets else 1)
-        self.budgets.append(budget)
+            new_amount = float(amount) if amount is not None else current[3]
+            new_start_date = start_date if start_date is not None else current[4]
+            new_end_date = end_date if end_date is not None else current[5]
 
-    def update_budget(self, budget_id, category=None, amount=None, start_date=None, end_date=None):
-        budget = self.get_budget_by_id(budget_id)
-        if budget:
-            if category:
-                budget.category = category
-            if amount:
-                budget.amount = amount
-            if start_date:
-                budget.start_date = start_date
-            if end_date:
-                budget.end_date = end_date
-            return budget
-        return None
-
-    def delete_budget(self, budget_id):
-        budget = self.get_budget_by_id(budget_id)
-        if budget:
-            self.budgets.remove(budget)
+            cur.execute(
+                """UPDATE budgets 
+                   SET amount = ?, start_date = ?, end_date = ?
+                   WHERE budget_id = ?""",
+                (new_amount, new_start_date, new_end_date, budget_id)
+            )
+            conn.commit()
+            return True, "Budget updated successfully"
+        except Exception as e:
+            print(f"Error updating budget: {e}")
+            return False, "Failed to update budget"
+        finally:
+            cur.close()
+            conn.close()
 
     def get_budget_by_id(self, budget_id):
-        for budget in self.budgets:
-            if budget.budget_id == budget_id:
-                return budget
-        return None
+        conn = get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT * FROM budgets WHERE budget_id = ?", (budget_id,))
+            row = cur.fetchone()
+            if row:
+                return Budget(
+                    user_id=row[1],
+                    category=Category(row[2]),
+                    amount=Decimal(str(row[3])),
+                    start_date=row[4],
+                    end_date=row[5],
+                    budget_id=row[0]
+                )
+            return None
+        except Exception as e:
+            print(f"Error fetching budget: {e}")
+            return None
+        finally:
+            cur.close()
+            conn.close()
 
-    def get_all_budgets(self):
-        return self.budgets
+    def get_all_budgets(self, user_id):
+        conn = get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                SELECT * FROM budgets 
+                WHERE user_id = ? 
+                ORDER BY category""", 
+                (user_id,)
+            )
+            rows = cur.fetchall()
+            budgets = [Budget(
+                user_id=row[1],
+                category=Category(row[2]),
+                amount=Decimal(str(row[3])),
+                start_date=row[4],
+                end_date=row[5],
+                budget_id=row[0]
+            ) for row in rows]
+            return budgets
+        except Exception as e:
+            print(f"Error fetching budgets: {e}")
+            return []
+        finally:
+            cur.close()
+            conn.close()
+
+    def get_active_budgets(self, user_id):
+        conn = get_connection()
+        cur = conn.cursor()
+        try:
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            cur.execute("""
+                SELECT * FROM budgets 
+                WHERE user_id = ? 
+                AND start_date <= ? 
+                AND end_date >= ?
+                ORDER BY category
+            """, (user_id, current_date, current_date))
+            
+            rows = cur.fetchall()
+            return [Budget(
+                user_id=row[1],
+                category=Category(row[2]),
+                amount=Decimal(str(row[3])),
+                start_date=row[4],
+                end_date=row[5],
+                budget_id=row[0]
+            ) for row in rows]
+        except Exception as e:
+            print(f"Error fetching active budgets: {e}")
+            return []
+        finally:
+            cur.close()
+            conn.close()

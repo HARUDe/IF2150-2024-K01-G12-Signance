@@ -3,20 +3,11 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget, QSizePolicy, QLabel
 )
 from .pages import LoginPage, DashboardPage, TransactionPage, BudgetPage, SavingsPage, RegisterPage
-from controllers import BudgetController, UserController
-
-from .pages import LoginPage, RegisterPage, DashboardPage, TransactionPage, SavingsPage, BudgetPage
-from controllers import TransactionController
-
-budget_controller = BudgetController()
-transaction_controller = TransactionController()
-
-# src/views/main_window.py
 from controllers import BudgetController, UserController, TransactionController, SavingsController
 
 budget_controller = BudgetController()
+transaction_controller = TransactionController()
 saving_controller = SavingsController() 
-transaction_controller = TransactionController() 
 user_controller = UserController()
 
 class MainWindow(QMainWindow):
@@ -24,7 +15,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Signance - Financial Manager")
         self.setGeometry(100, 100, 1200, 800)
-        self.setWindowIcon(QIcon("img\logo.png"))
+        self.setWindowIcon(QIcon("img/logo.png"))
         self.logged_in = False
         self.user_id = None
         self.user_name = ""  # This will store the logged-in user's name
@@ -42,11 +33,10 @@ class MainWindow(QMainWindow):
 
         # Pages
         self.pages = {
-            "Transactions": TransactionPage(self.user_id, transaction_controller),
-            "Dashboard": DashboardPage(self.user_id, user_controller, transaction_controller, budget_controller, lambda: self.switch_page("Savings")),
-            "Transactions": TransactionPage(self.user_id, transaction_controller),
-            "Savings": SavingsPage(self.user_id, saving_controller),
-            "Budget": BudgetPage(self.user_id, budget_controller),
+            "Transactions": None,  # Initially set to None, will be updated after login
+            "Dashboard": None,  # Initially set to None, will be updated after login
+            "Savings": None,  # Initially set to None, will be updated after login
+            "Budget": None,  # Initially set to None, will be updated after login
             "Login": LoginPage(self),
             "Register": RegisterPage(self)
         }
@@ -60,7 +50,8 @@ class MainWindow(QMainWindow):
 
         # Add all pages to the content area initially
         for page_widget in self.pages.values():
-            self.content_area.addWidget(page_widget)
+            if page_widget:
+                self.content_area.addWidget(page_widget)
 
         # Add sidebar and content area to the main layout
         self.sidebar_widget = QWidget()
@@ -137,11 +128,21 @@ class MainWindow(QMainWindow):
         """Handle successful login."""
         user_controller = UserController()
         user = user_controller.get_user_by_username_or_email(username_or_email)
-
         self.logged_in = True
         self.user_id = user[0]
         self.user_name = user[1]  # Update the user name
-        print(f"Logged in as {self.user_name}")
-        print(f"User ID: {self.user_id}")
         self.update_sidebar()
-        self.switch_page("Dashboard")  # Go to the dashboard page
+
+        # Now initialize the pages with the correct user_id and other controllers
+        self.pages["Transactions"] = TransactionPage(self.user_id, transaction_controller)
+        self.pages["Dashboard"] = DashboardPage(self.user_id, user_controller, transaction_controller, budget_controller, lambda: self.switch_page("Savings"))
+        self.pages["Savings"] = SavingsPage(self.user_id, saving_controller)
+        self.pages["Budget"] = BudgetPage(self.user_id, budget_controller)
+
+        # Add the pages to the content area
+        for page_widget in self.pages.values():
+            if page_widget:
+                self.content_area.addWidget(page_widget)
+
+        # Switch to the Dashboard page after login
+        self.switch_page("Dashboard")
