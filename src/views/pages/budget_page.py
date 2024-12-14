@@ -71,14 +71,14 @@ class BudgetPage(QWidget):
                 self.table_widget.setItem(row, 1, amount_item)
                 
                 # Start Date
-                start_date = datetime.strptime(budget.start_date, "%Y-%m-%d %H:%M:%S.%f")
-                start_date_str = start_date.strftime("%d %b %Y")
+                start_date = self._parse_date(budget.start_date)
+                start_date_str = start_date.strftime("%Y-%m-%d") if start_date else "Invalid Date"
                 start_date_item = QTableWidgetItem(start_date_str)
                 self.table_widget.setItem(row, 2, start_date_item)
                 
                 # End Date
-                end_date = datetime.strptime(budget.end_date, "%Y-%m-%d %H:%M:%S.%f")
-                end_date_str = end_date.strftime("%d %b %Y")
+                end_date = self._parse_date(budget.end_date)
+                end_date_str = end_date.strftime("%Y-%m-%d") if end_date else "Invalid Date"
                 end_date_item = QTableWidgetItem(end_date_str)
                 self.table_widget.setItem(row, 3, end_date_item)
             except Exception as e:
@@ -97,6 +97,30 @@ class BudgetPage(QWidget):
             )
             if dialog.exec_():
                 self.refresh_budget_list()
+
+    def _parse_date(self, date_str):
+        """
+        Parse date strings in the format 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS'.
+        """
+        if not date_str:  # Handle None or empty strings
+            return None
+
+        date_str = date_str.split(".")[0]
+
+        date_formats = [
+            "%Y-%m-%d",           # Date only
+            "%Y-%m-%d %H:%M:%S",  # Full timestamp without microseconds
+        ]
+
+        for fmt in date_formats:
+            try:
+                return datetime.strptime(date_str, fmt)
+            except ValueError:
+                continue
+
+        # Log a warning if no format matches
+        print(f"Unable to parse date: {date_str}")
+        return None
 
 class BudgetForm(QDialog):
     def __init__(self, user_id, controller, budget=None, parent=None):
@@ -120,12 +144,19 @@ class BudgetForm(QDialog):
         
         # Convert string dates to QDate
         if budget:
-            # Try multiple date parsing formats
-            start_date = self._parse_date(budget.start_date)
-            end_date = self._parse_date(budget.end_date)
-            
-            self.start_date_input.setDate(QDate(start_date.year, start_date.month, start_date.day))
-            self.end_date_input.setDate(QDate(end_date.year, end_date.month, end_date.day))
+            try:
+                # Parse start date
+                start_date = self._parse_date(budget.start_date)
+                self.start_date_input.setDate(QDate(start_date.year, start_date.month, start_date.day))
+                
+                # Parse end date
+                end_date = self._parse_date(budget.end_date)
+                self.end_date_input.setDate(QDate(end_date.year, end_date.month, end_date.day))
+            except Exception as e:
+                print(f"Error parsing dates: {e}")
+                # Fallback to current date if parsing fails
+                self.start_date_input.setDate(QDate.currentDate())
+                self.end_date_input.setDate(QDate.currentDate())
         else:
             self.start_date_input.setDate(QDate.currentDate())
             self.end_date_input.setDate(QDate.currentDate())
@@ -154,12 +185,16 @@ class BudgetForm(QDialog):
 
     def _parse_date(self, date_str):
         """
-        Try multiple date parsing formats
+        Parse date strings in the format 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS'.
         """
+        if not date_str:  # Handle None or empty strings
+            return None
+
+        date_str = date_str.split(".")[0]
+
         date_formats = [
-            "%Y-%m-%d %H:%M:%S.%f",  # Full timestamp with microseconds
-            "%Y-%m-%d %H:%M:%S",     # Timestamp without microseconds
-            "%Y-%m-%d",              # Date only
+            "%Y-%m-%d",           # Date only
+            "%Y-%m-%d %H:%M:%S",  # Full timestamp without microseconds
         ]
 
         for fmt in date_formats:
@@ -167,8 +202,11 @@ class BudgetForm(QDialog):
                 return datetime.strptime(date_str, fmt)
             except ValueError:
                 continue
-        
-        raise ValueError(f"Unable to parse date: {date_str}")
+
+        # Log a warning if no format matches
+        print(f"Unable to parse date: {date_str}")
+        return None
+
 
     def save_budget(self):
         try:
@@ -193,13 +231,13 @@ class BudgetForm(QDialog):
                 QMessageBox.warning(self, "Error", message)
         else:
             QMessageBox.warning(self, "Error", "Please provide valid inputs.")
-   
 
 class BudgetDetailDialog(QDialog):
     def __init__(self, budget, controller, parent=None):
         super().__init__(parent)
         self.budget = budget
         self.controller = controller
+        self.parent_page = parent  # Reference to the parent page
 
         self.setWindowTitle("Budget Details")
         self.setMinimumSize(400, 300)
@@ -220,11 +258,11 @@ class BudgetDetailDialog(QDialog):
         # Editable dates
         self.start_date_input = QDateEdit()
         self.end_date_input = QDateEdit()
-        
+
         # Convert string dates to QDate
         start_date = datetime.strptime(budget.start_date, "%Y-%m-%d %H:%M:%S.%f")
         end_date = datetime.strptime(budget.end_date, "%Y-%m-%d %H:%M:%S.%f")
-        
+
         self.start_date_input.setDate(QDate(start_date.year, start_date.month, start_date.day))
         self.end_date_input.setDate(QDate(end_date.year, end_date.month, end_date.day))
 
@@ -245,7 +283,7 @@ class BudgetDetailDialog(QDialog):
 
         # Buttons
         button_layout = QHBoxLayout()
-        
+
         update_dates_button = QPushButton("Update Dates")
         update_dates_button.clicked.connect(self.update_budget_dates)
         button_layout.addWidget(update_dates_button)
@@ -273,6 +311,8 @@ class BudgetDetailDialog(QDialog):
 
             if success:
                 QMessageBox.information(self, "Success", "Budget dates updated successfully.")
+                if self.parent_page:
+                    self.parent_page.refresh_budget_list()
                 self.accept()
             else:
                 QMessageBox.warning(self, "Error", message)
@@ -287,4 +327,6 @@ class BudgetDetailDialog(QDialog):
             parent=self
         )
         if dialog.exec_():  
-            self.accept()  # Close the details dialog
+            if self.parent_page:
+                self.parent_page.refresh_budget_list()
+            self.accept() 
