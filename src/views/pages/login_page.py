@@ -316,6 +316,7 @@ class LoginPage(QWidget):
         email_or_username = self.email_or_username_input.text()
         password = self.password_input.text()
 
+        # Assuming user_controller.login handles hashing and decryption
         if self.user_controller.login(email_or_username, password):
             self.login_successful.emit(email_or_username)
         else:

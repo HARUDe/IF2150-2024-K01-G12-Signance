@@ -4,7 +4,7 @@ from models.user import User
 from models.budget import Category
 from database.database import get_connection
 from datetime import datetime
-from utils import hash_password
+from utils import hash_password, decrypt_password
 
 class UserController:
     def __init__(self):
@@ -14,26 +14,22 @@ class UserController:
         conn = get_connection()
         cur = conn.cursor()
         try:
-            hashed_password = hash_password(password)
-            cur.execute("SELECT * FROM users WHERE username = ? AND password_hash = ?", 
-                      (username_or_email, hashed_password))
+            cur.execute("SELECT * FROM users WHERE username = ? OR email = ?", 
+                    (username_or_email, username_or_email))
             user = cur.fetchone()
-            if not user:
-                cur.execute("SELECT * FROM users WHERE email = ? AND password_hash = ?", 
-                          (username_or_email, hashed_password))
-                user = cur.fetchone()
             
             if user:
-                self.logged_in_user = User(
-                    username=user[1],
-                    email=user[2],
-                    password_hash=user[3],
-                    user_id=user[0]
-                )
-                
-                return user
+                stored_hash = user[3]
+                if decrypt_password(password, stored_hash):
+                    self.logged_in_user = User(
+                        username=user[1],
+                        email=user[2],
+                        password_hash=user[3],
+                        user_id=user[0]
+                    )
+                    return user
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print(f"Login error: {e}")
         finally:
             cur.close()
             conn.close()
@@ -49,37 +45,17 @@ class UserController:
         conn = get_connection()
         cur = conn.cursor()
         try:
-            hashed_password = hash_password(password)
+            password_hash = hash_password(password)
+            print(f"Registration hash: {password_hash}")  # Debug print
+            
             cur.execute(
-                "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)", 
-                (username, email, hashed_password)
+                "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
+                (username, email, password_hash)
             )
-            user_id = cur.lastrowid
-            
-            default_amount = 1000000  # 1,000,000 default amount
-            current_date = datetime.now()
-            end_date = datetime(current_date.year + 1, current_date.month, current_date.day)
-            
-            categories = [
-                Category.FOODS.value,
-                Category.TRANSPORT.value,
-                Category.ENTERTAINMENT.value, 
-                Category.EDUCATION.value,
-                Category.OTHER.value
-            ]
-            
-            for category in categories:
-                cur.execute(
-                    """INSERT INTO budgets 
-                       (user_id, category, amount, start_date, end_date) 
-                       VALUES (?, ?, ?, ?, ?)""",
-                    (user_id, category, default_amount, current_date, end_date)
-                )
-            
             conn.commit()
             return True, "Registration successful"
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print(f"Registration error: {e}")
             return False, "Registration failed"
         finally:
             cur.close()
