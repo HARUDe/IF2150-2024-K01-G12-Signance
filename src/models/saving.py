@@ -1,17 +1,17 @@
 # src/models/saving.py
+
 from datetime import datetime
 from decimal import Decimal
 
 class SavingGoal:
-    def __init__(self, user_id: int, name: str, target_amount: Decimal,
-                 deadline: datetime, saving_id: int = None):
+    def __init__(self, saving_id, user_id, name, target_amount, current_amount, deadline, created_at):
         self.saving_id = saving_id
         self.user_id = user_id
         self.name = name
         self.target_amount = target_amount
-        self.current_amount = Decimal('0')
+        self.current_amount = current_amount
         self.deadline = deadline
-        self.created_at = datetime.now()
+        self.created_at = created_at
 
     def add_saving(self, amount: Decimal):
         self.current_amount += amount

@@ -1,9 +1,18 @@
 # src/models/budget.py
+
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum
+
+class Category(Enum):
+    FOODS = "foods"
+    TRANSPORT = "transport"
+    ENTERTAINMENT = "entertainment"
+    EDUCATION = "education"
+    OTHER = "other"
 
 class Budget:
-    def __init__(self, user_id: int, category: str, amount: Decimal,
+    def __init__(self, user_id: int, category: Category, amount: Decimal,
                  start_date: datetime, end_date: datetime, budget_id: int = None):
         self.budget_id = budget_id
         self.user_id = user_id
@@ -26,7 +35,7 @@ class Budget:
         return {
             'budget_id': self.budget_id,
             'user_id': self.user_id,
-            'category': self.category,
+            'category': self.category.value,
             'amount': str(self.amount),
             'current_amount': str(self.current_amount),
             'start_date': self.start_date,

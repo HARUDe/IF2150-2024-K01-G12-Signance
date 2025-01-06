@@ -1,4 +1,6 @@
-# Import main classes to make them available directly from models package
+# src/models/__init__.py
+# Description : Module initialization
+
 from .user import User
 from .transaction import Transaction, TransactionType
 from .budget import Budget
