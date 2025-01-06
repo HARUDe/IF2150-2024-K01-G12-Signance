@@ -1,3 +1,5 @@
+#src/views/pages/dashboard_page.py
+
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QPushButton,
     QSpacerItem, QSizePolicy, QHBoxLayout, QProgressBar

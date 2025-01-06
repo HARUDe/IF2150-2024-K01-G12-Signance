@@ -1,3 +1,6 @@
+#src/views/main_window.py
+# Description : Main window for the application
+
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget, QSizePolicy, QLabel

@@ -1,3 +1,5 @@
+#src/views/pages/transaction_page.py
+
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QPushButton, QLabel, QScrollArea,
     QFormLayout, QLineEdit, QComboBox, QHBoxLayout, QMessageBox,

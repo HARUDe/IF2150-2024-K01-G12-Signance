@@ -4,6 +4,7 @@ from models.user import User
 from models.budget import Category
 from database.database import get_connection
 from datetime import datetime
+from utils import hash_password
 
 class UserController:
     def __init__(self):
@@ -13,12 +14,13 @@ class UserController:
         conn = get_connection()
         cur = conn.cursor()
         try:
+            hashed_password = hash_password(password)
             cur.execute("SELECT * FROM users WHERE username = ? AND password_hash = ?", 
-                      (username_or_email, password))
+                      (username_or_email, hashed_password))
             user = cur.fetchone()
             if not user:
                 cur.execute("SELECT * FROM users WHERE email = ? AND password_hash = ?", 
-                          (username_or_email, password))
+                          (username_or_email, hashed_password))
                 user = cur.fetchone()
             
             if user:
@@ -47,9 +49,10 @@ class UserController:
         conn = get_connection()
         cur = conn.cursor()
         try:
+            hashed_password = hash_password(password)
             cur.execute(
                 "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)", 
-                (username, email, password)
+                (username, email, hashed_password)
             )
             user_id = cur.lastrowid
             
